@@ -1,0 +1,1038 @@
+<!doctype html>
+<!-- docs/mockups/final-invoice.html — LD-44 stage 5: the compose-overlay mockup (Phase M).
+     Static, for approval; iterated in chat until blessed; the mockup GATES the build.
+     Authority: docs/slices/final-invoice-2-design-gate.md (§1 rulings R1–R23, §2 brief).
+     Visual donors: docs/mockups/timeclock.html (panekit ops hexes) +
+     docs/mockups/estimate-options.html (mockup chrome convention).
+     Fixtures (illustrative, drawn from the July 2026 specimens — D7068 / D7075 / D7076
+     shapes): Vicki Hanson est 7050 → draft D7108 · Connie Bethke 7041 · Sonja Hungness
+     7062 · Bob Nelson 7055 · Ren Schaefer 7100 / 7101 / 7115 / 6841.
+     The dark top bar and caption strip are mockup chrome, not proposed interface.
+     Every control on the overlay responds; nothing touches QuickBooks. Aug 2026. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Final invoice — compose · mockup</title>
+<style>
+  /* ── Design tokens (panekit ops hexes — donor: docs/mockups/timeclock.html) ── */
+  :root {
+    --ink:       #1d2b1f;
+    --ink-soft:  #3a4a3c;
+    --ink-mute:  #5a6b5c;
+    --faint:     #8a978d;
+    --bg:        #f2f5f2;
+    --surface:   #ffffff;
+    --line:      #dbe4dc;
+    --line-soft: #e9efe9;
+    --green:     #234b34;
+    --green-mid: #2e6b43;
+    --green-brt: #46a05f;
+    --wash:      #e2f3e7;
+    --amber-bg:  #fff4e0;
+    --amber:     #8a5a00;
+    --danger:    #b3422f;
+    --danger-bg: #fbeae6;
+    --radius:    12px;
+    --radius-sm: 9px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+  body { font-family: var(--font); font-size: 14px; line-height: 1.45; color: var(--ink-soft); background: var(--bg); -webkit-font-smoothing: antialiased; }
+
+  /* ── Mockup chrome (NOT part of the proposed UI) ── */
+  .mock-top { position: sticky; top: 0; z-index: 60; background: #101812; color: #e8efe9; padding: 11px 16px 12px; box-shadow: 0 6px 24px rgba(0,0,0,.28); }
+  .mock-brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 14px; font-weight: 750; }
+  .mock-brand span { font-size: 11.5px; font-weight: 500; color: #9fb3a5; }
+  .mock-rows { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; align-items: center; }
+  .mock-tab, .mock-view button { font: inherit; font-size: 12px; font-weight: 650; color: #cfe0d4; background: #1d2a20; border: 1px solid #2c3d31; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  .mock-tab.is-on, .mock-view button.is-on { background: #46a05f; border-color: #46a05f; color: #0c130e; }
+  .mock-view { margin-left: auto; display: flex; gap: 6px; }
+  .mock-cap { max-width: 940px; margin: 14px auto 0; padding: 10px 16px; font-size: 13px; color: #3c4a41; background: #e6ebe5; border: 1px solid #d5ddd4; border-radius: 10px; line-height: 1.5; }
+  .mock-note { max-width: 940px; margin: 6px auto 0; padding: 0 16px; font-size: 11.5px; color: var(--faint); }
+
+  /* ── Stage: dimmed board behind, overlay in front ── */
+  .stage { position: relative; margin-top: 12px; min-height: 640px; overflow: hidden; }
+  .board { position: absolute; inset: 0; overflow: hidden; }
+  .pagehead { background: #234b34; color: #fff; padding: 14px 18px; }
+  .pagehead h1 { margin: 0; font-size: 18px; }
+  .pagehead p { margin: 2px 0 0; font-size: 12px; color: #cfe0d2; }
+  .bwrap { max-width: 940px; margin: 0 auto; padding: 14px; }
+  .chev { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 14px; }
+  .chev span { font-size: 11.5px; font-weight: 650; color: var(--ink-mute); background: #fff; border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px; white-space: nowrap; }
+  .chev span.on { background: var(--green); border-color: var(--green); color: #fff; }
+  .bsec { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 0 0 8px; }
+  .bsec h2 { margin: 0; font-size: 15.5px; color: var(--ink); }
+  .brow { display: flex; align-items: center; gap: 10px; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .brow b { color: var(--ink); font-size: 13.5px; }
+  .brow .meta { font-size: 12px; color: var(--ink-mute); flex: 1; }
+  .dim { position: absolute; inset: 0; background: rgba(29,43,31,.55); }
+
+  .modalwrap { position: relative; z-index: 2; display: flex; justify-content: center; padding: 26px 14px 70px; }
+  .modal { width: min(900px, 100%); background: var(--surface); border-radius: 14px; box-shadow: 0 26px 70px rgba(22,33,27,.4); overflow: hidden; }
+  .m-head { display: flex; align-items: flex-start; gap: 10px; padding: 14px 16px 10px; border-bottom: 1px solid var(--line-soft); }
+  .m-title { font-size: 17px; font-weight: 750; color: var(--ink); }
+  .m-sub { font-size: 12px; color: var(--ink-mute); margin-top: 1px; }
+  .m-close { margin-left: auto; border: 1px solid var(--line); background: #fff; color: var(--ink-mute); border-radius: 8px; width: 28px; height: 28px; font-size: 15px; line-height: 1; cursor: pointer; }
+  .rail { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 16px; border-bottom: 1px solid var(--line-soft); background: #fafcfa; }
+  .rp { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 12px; font-weight: 650; color: var(--ink-mute); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; cursor: pointer; }
+  .rp .n { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 50%; background: var(--line-soft); color: var(--ink-mute); font-size: 10.5px; font-weight: 800; }
+  .rp.cur { border-color: var(--green); color: var(--green); }
+  .rp.cur .n { background: var(--green); color: #fff; }
+  .rp.off { opacity: .5; }
+  .m-body { padding: 14px 16px 16px; }
+  .lede { font-size: 13px; color: var(--ink-soft); margin: 0 0 12px; }
+  .m-foot { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line-soft); background: #fafcfa; }
+  .m-foot .sp { flex: 1; }
+
+  .btn { border: none; border-radius: 9px; padding: 9px 15px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-ghost { background: #fff; color: var(--green); border: 1px solid var(--line); }
+  .btn-danger { background: #fff; color: var(--danger); border: 1px solid #ecd2cb; }
+  .btn[disabled] { opacity: .45; cursor: default; }
+  .btnsm { padding: 6px 11px; font-size: 12.5px; }
+  .link-btn { background: none; border: none; padding: 0; font: inherit; font-size: inherit; font-weight: 650; color: var(--green-mid); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+
+  .chip { display: inline-block; border-radius: 999px; padding: 3px 9px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+  .chip-ok { background: var(--wash); color: #1e6b3a; }
+  .chip-quiet { background: #f0f3f0; color: var(--ink-mute); }
+  .chip-adv { background: var(--amber-bg); color: var(--amber); }
+  .chip-block { background: #7f1d1d; color: #fff; }
+  .chip-green { background: var(--green); color: #fff; }
+
+  .spot { box-shadow: 0 0 0 3px rgba(70,160,95,.55); border-radius: var(--radius); }
+
+  /* ── Step 1: coverage ── */
+  .fixnote { font-size: 12.5px; color: var(--amber); background: var(--amber-bg); border: 1px solid #f0e0bd; border-radius: var(--radius-sm); padding: 8px 11px; margin: 0 0 12px; }
+  .cov { display: flex; gap: 11px; align-items: flex-start; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 13px; margin-bottom: 9px; }
+  .cov input[type=checkbox] { width: 17px; height: 17px; margin-top: 2px; accent-color: var(--green-mid); flex: none; }
+  .cov-lock { flex: none; width: 17px; height: 17px; margin-top: 2px; color: var(--faint); }
+  .cov-main { flex: 1; min-width: 0; }
+  .cov-t { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: var(--ink); font-size: 13.5px; }
+  .cov-t b { font-weight: 750; }
+  .cov-date { font-size: 12px; color: var(--ink-mute); font-weight: 500; }
+  .cov-memos { margin-top: 5px; font-size: 12.5px; color: var(--ink-soft); }
+  .cov-memos span { color: var(--faint); font-size: 11px; text-transform: uppercase; letter-spacing: .4px; font-weight: 700; margin-right: 5px; }
+  .cov-dep { margin-top: 6px; }
+  .cov-sub { margin-top: 5px; font-size: 12.5px; color: var(--ink-mute); }
+  .cov-block { margin-top: 6px; font-size: 12.5px; color: var(--danger); }
+  .cov-side { flex: none; text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+  .cov-amt { font-size: 14px; font-weight: 750; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .cov.blocked { background: #f7f8f7; }
+  .cov.blocked .cov-t b, .cov.blocked .cov-amt { color: var(--ink-mute); }
+  .dispo { margin-top: 8px; background: #f7f9f7; border: 1px dashed var(--line); border-radius: var(--radius-sm); padding: 9px 11px; font-size: 12.5px; color: var(--ink-soft); }
+  .dispo-btns { display: flex; gap: 8px; margin-top: 7px; flex-wrap: wrap; }
+  .bks { margin-top: 16px; }
+  .bks-h { font-size: 13px; font-weight: 750; color: var(--ink); }
+  .bks-n { font-size: 12px; color: var(--ink-mute); margin: 2px 0 8px; }
+  .bk-r { display: flex; align-items: baseline; gap: 10px; background: #fff; border: 1px solid var(--line-soft); border-radius: 8px; padding: 7px 11px; margin-bottom: 6px; font-size: 12.5px; }
+  .bk-doc { font-weight: 750; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .bk-k { flex: 1; color: var(--ink-mute); }
+  .bk-a { font-weight: 650; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* ── Step 2: lines ── */
+  .heldban { background: var(--amber-bg); border: 1px solid #f0e0bd; border-radius: var(--radius); padding: 11px 13px; margin: 0 0 12px; }
+  .hb-t { font-size: 13.5px; font-weight: 750; color: var(--amber); }
+  .hb-b { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; }
+  .ghead { display: flex; align-items: baseline; gap: 9px; margin: 14px 0 8px; }
+  .ghead b { font-size: 13.5px; color: var(--ink); }
+  .ghead span { font-size: 12px; color: var(--ink-mute); }
+  .lc { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 13px; margin-bottom: 10px; }
+  .lc-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .lc-name { font-size: 13.5px; font-weight: 750; color: var(--ink); }
+  .lc-desc { font-size: 12.5px; color: var(--ink-mute); margin-top: 4px; }
+  .lgrid { display: grid; grid-template-columns: 1.2fr 1.1fr 1.4fr 1fr; gap: 10px 14px; margin-top: 10px; }
+  .fk { color: var(--faint); font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; font-weight: 700; margin-bottom: 3px; }
+  .fv { color: var(--ink); font-size: 13px; }
+  .famt { color: var(--ink-mute); font-size: 12.5px; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .fmute { color: var(--ink-mute); font-size: 12.5px; }
+  .candchip { display: inline-flex; font: inherit; font-size: 12px; font-weight: 650; color: var(--green); background: var(--wash); border: 1px solid #bfe0c9; border-radius: 999px; padding: 4px 10px; cursor: pointer; margin-bottom: 6px; }
+  .candchip.is-on { background: var(--green); border-color: var(--green); color: #fff; }
+  input.qty { width: 100%; max-width: 150px; font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); }
+  .sugg-str { font-size: 13px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .sugg-why { font-size: 12.5px; color: var(--ink-mute); }
+  .use-wrap { margin-top: 6px; }
+  .moneywrap { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 8px; padding: 0 8px; background: #fff; }
+  .moneywrap span { color: var(--ink-mute); font-size: 13px; }
+  input.money { width: 92px; border: none; outline: none; font: inherit; font-size: 13px; padding: 6px 0; color: var(--ink); font-variant-numeric: tabular-nums; text-align: right; background: transparent; }
+  .fchip { display: block; margin-top: 6px; }
+  .evi { margin-top: 9px; padding-top: 8px; border-top: 1px dashed var(--line-soft); font-size: 12px; color: var(--ink-mute); }
+  .files-btn { font: inherit; font-size: 11.5px; font-weight: 650; color: var(--green-mid); background: #f0f3f0; border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; cursor: pointer; }
+  .lc.slim .slim-row { display: flex; gap: 12px; align-items: flex-start; }
+  .slim-main { flex: 1; min-width: 0; }
+  .flagline { margin-top: 8px; font-size: 12.5px; color: var(--amber); background: var(--amber-bg); border-radius: var(--radius-sm); padding: 8px 10px; }
+  select.pick, input.nm { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: #fff; margin-top: 7px; max-width: 100%; }
+  .addwrap { margin: 4px 0 2px; }
+
+  /* ── Step 3: deposit & totals ── */
+  .odep { background: #fff; border: 1.5px solid #e8d9b0; border-radius: var(--radius); padding: 12px 14px; margin: 0 0 12px; }
+  .odep-head { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 13.5px; color: var(--ink); }
+  .odep-intro { font-size: 12.5px; color: var(--ink-soft); margin: 6px 0 9px; }
+  .oopt { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius-sm); margin-bottom: 7px; cursor: pointer; }
+  .oopt input { margin-top: 3px; accent-color: var(--green-mid); }
+  .oopt b { font-size: 13px; color: var(--ink); font-weight: 700; }
+  .oopt-s { font-size: 12.5px; color: var(--ink-mute); margin-top: 2px; }
+  .waitnote { font-size: 12.5px; color: var(--amber); margin-top: 4px; }
+  .tot { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
+  .t-r { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 13px; color: var(--ink-soft); }
+  .t-r .amt { font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+  .t-strong { border-top: 1px solid var(--line-soft); margin-top: 4px; padding-top: 8px; font-weight: 700; color: var(--ink); }
+  .t-dep { color: var(--ink-mute); }
+  .t-dep .amt { color: var(--ink-mute); font-weight: 600; }
+  .t-grand { border-top: 1px solid var(--line); margin-top: 6px; padding-top: 9px; font-size: 14.5px; font-weight: 800; color: var(--ink); }
+  .t-grand .amt { font-weight: 800; }
+  .owed { margin-top: 12px; background: var(--danger-bg); border: 1px solid #ecd2cb; border-radius: var(--radius); padding: 12px 14px; }
+  .ow-t { font-size: 14px; font-weight: 800; color: var(--danger); }
+  .ow-b { font-size: 12.5px; color: var(--ink-soft); margin: 4px 0 9px; }
+
+  /* ── Step 4: review & edit ── */
+  .crhead { background: #f7faf7; border: 1px solid var(--line); border-radius: var(--radius); padding: 11px 13px; margin-bottom: 10px; }
+  .cr-t { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 13.5px; font-weight: 750; color: var(--ink); }
+  .cr-s { font-size: 12.5px; color: var(--ink-mute); margin-top: 3px; }
+  .actrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+
+  /* ── Step 5: send ── */
+  .recips { display: flex; gap: 7px; flex-wrap: wrap; margin: 8px 0 9px; }
+  .rchip { display: inline-flex; align-items: center; gap: 7px; background: #f0f3f0; border: 1px solid var(--line); border-radius: 999px; padding: 5px 7px 5px 12px; font-size: 12.5px; color: var(--ink); }
+  .rchip button { border: none; background: #fff; color: var(--ink-mute); border-radius: 50%; width: 18px; height: 18px; font-size: 11px; line-height: 1; cursor: pointer; }
+  .radd { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .radd input { font: inherit; font-size: 13px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; min-width: 230px; color: var(--ink); }
+  .helper { font-size: 12px; color: var(--ink-mute); margin-top: 7px; }
+  .fieldlab { font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--faint); }
+
+  /* ── Sheets ── */
+  .scrim { position: absolute; inset: 0; z-index: 5; background: rgba(29,43,31,.5); display: flex; align-items: flex-start; justify-content: center; padding: 60px 14px; }
+  .sheet { background: #fff; border-radius: 12px; padding: 15px 16px 13px; width: 100%; max-width: 470px; box-shadow: 0 18px 50px rgba(22,33,27,.4); }
+  .sheet-title { font-size: 15px; font-weight: 800; color: var(--ink); }
+  .sheet-sub { font-size: 12.8px; color: var(--ink-soft); margin: 7px 0 0; line-height: 1.5; }
+  .sheet-list { margin-top: 11px; border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; }
+  .sh-r { display: flex; gap: 10px; align-items: baseline; padding: 8px 11px; border-bottom: 1px solid var(--line-soft); font-size: 12.5px; background: #fafcfa; }
+  .sh-r:last-child { border-bottom: none; }
+  .sh-k { flex: none; min-width: 108px; color: var(--faint); font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; font-weight: 700; }
+  .sh-v { flex: 1; color: var(--ink); }
+  .sh-warn { display: flex; gap: 8px; align-items: flex-start; margin-top: 9px; font-size: 12.5px; color: var(--amber); background: var(--amber-bg); border-radius: var(--radius-sm); padding: 8px 10px; }
+  .sheet-note { font-size: 12px; color: var(--ink-mute); margin-top: 10px; }
+  .sheet-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 13px; flex-wrap: wrap; }
+
+  /* ── Toast ── */
+  #toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 90; background: #1d2b1f; color: #e8efe9; font-size: 13px; padding: 10px 16px; border-radius: 999px; box-shadow: 0 10px 30px rgba(0,0,0,.35); max-width: min(560px, 92vw); text-align: center; }
+
+  /* ── Phone view + narrow screens ── */
+  .stage.phone .modal { max-width: 430px; }
+  .stage.phone .lgrid { grid-template-columns: 1fr 1fr; }
+  .stage.phone .cov { flex-wrap: wrap; }
+  .stage.phone .cov-side { flex-direction: row; width: 100%; justify-content: space-between; align-items: center; }
+  .stage.phone .chev span { font-size: 10px; padding: 4px 7px; }
+  @media (max-width: 700px) {
+    .lgrid { grid-template-columns: 1fr 1fr; }
+    .cov { flex-wrap: wrap; }
+    .cov-side { flex-direction: row; width: 100%; justify-content: space-between; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="mock-top">
+  <div class="mock-brand">Final invoice — compose · mockup <span>LD-44 stage 5 · draft 1 · fixtures: Hanson · Bethke · Hungness · Nelson · Schaefer</span></div>
+  <div class="mock-rows" id="tabs">
+    <button class="mock-tab is-on" data-i="0">1 · Clean derivation</button>
+    <button class="mock-tab" data-i="1">2 · Prose quantity</button>
+    <button class="mock-tab" data-i="2">3 · Held visits</button>
+    <button class="mock-tab" data-i="3">4 · Added line</button>
+    <button class="mock-tab" data-i="4">5 · Open deposit</button>
+    <button class="mock-tab" data-i="5">6 · Customer owed</button>
+    <button class="mock-tab" data-i="6">7 · Coverage &amp; options</button>
+    <button class="mock-tab" data-i="7">8 · No item set</button>
+    <button class="mock-tab" data-i="8">9 · Review &amp; overwrite</button>
+    <div class="mock-view"><button id="vw-desk" class="is-on">Desktop</button><button id="vw-phone">Phone</button></div>
+  </div>
+</div>
+<div class="mock-cap" id="cap"></div>
+<p class="mock-note">The dark bar and this caption strip are mockup chrome, not proposed interface. The dimmed board behind the overlay is illustrative. Every control on the overlay responds — steps, checkboxes, menus and sheets. Figures are fixtures drawn from the July 2026 specimens; nothing here touches QuickBooks.</p>
+
+<div class="stage" id="stage">
+  <div class="board" aria-hidden="true" id="board"></div>
+  <div class="dim"></div>
+  <div class="modalwrap"><div class="modal" id="modal"></div></div>
+  <div id="sheetlayer"></div>
+</div>
+
+<script>
+(function () {
+"use strict";
+
+/* ───────── helpers ───────── */
+var $ = function (s, r) { return (r || document).querySelector(s); };
+function fm(c) {
+  var neg = c < 0, v = Math.abs(c);
+  var s = "$" + (v / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return neg ? "\u2212" + s : s;
+}
+function plain(c) { return (Math.abs(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+/* ───────── fixtures ───────── */
+var DEALS = {
+
+  vicki: {
+    customer: "Vicki Hanson", planLine: "Curb & rock — 1 job, confirmed Jul 30",
+    nextDoc: "D7108", createdAt: "Aug 6, 10:42 AM", theirTotalC: 865843,
+    recipients: ["vhanson7@gmail.com", "paul.hanson@outlook.com"],
+    taxRate: 0.055, taxLabel: "Sales tax (WI 5.5%)",
+    coverage: [
+      { doc: "7050", date: "Jun 24, 2026", totalC: 584998, kind: "plan", included: true,
+        cmemo: "Thank you for your business. A 50% deposit is required to schedule.",
+        pmemo: "Options quoted on the curb line \u2014 A Boise stamp / B basic roller.",
+        depTag: "Deposit 6470 \u00b7 paid Jul 8" }
+    ],
+    backstop: [
+      { doc: "6470", kind: "Deposit invoice", date: "Jul 8, 2026", totalC: 292499, status: "Paid" }
+    ],
+    groups: [
+      { doc: "7050", sub: "accepted Jun 24, 2026", lines: [
+        { id: "curb", name: "Curb Edging", item: "Curbing \u203a Curbing",
+          desc: "Concrete curb edging, colored and stamped. Option A - Boise Stamp $3,145 OR Option B - Basic Roller $2,590. 185 linear feet.",
+          q: { qty: 185, unit: "ft", unitOne: "ft", rateC: 1700, amtC: 314500 },
+          cand: { qty: 255, unit: "ft", form: "Curb Edging Install", date: "Jul 30", crew: "Dalton E., Jimmy S.", files: 3, label: "Linear feet" },
+          actual: 255, finalC: 433500, how: "adopted" },
+        { id: "rock", name: "Decorative rock", item: "Rock-Stone \u203a Rock",
+          desc: "Decorative rock supplied and installed. Estimated 6 tons.",
+          q: { qty: 6, unit: "tons", unitOne: "ton", rateC: 30000, amtC: 180000 },
+          cand: { qty: 11, unit: "tons", form: "Rock Install", date: "Jul 30", crew: "Dalton E., Jimmy S.", files: 2, label: "Tons installed" },
+          actual: 11, finalC: 330000, how: "adopted" },
+        { id: "fabric", name: "Weed fabric", item: "Rock-Stone \u203a Fabric",
+          desc: "Commercial weed fabric under all rock areas, installed as needed.",
+          q: { amtC: 30000, unstructured: true }, cand: null, actual: null, finalC: 40000, how: "typed" },
+        { id: "disc", name: "Referral discount", discount: true, slim: true,
+          tag: "Discount \u2014 carried from estimate 7050",
+          desc: "Applied on the estimate; carried onto the final unchanged.", finalC: -15000 }
+      ]}
+    ],
+    added: [
+      { id: "weed", name: "Weeding", noItem: true, slim: true, added: true,
+        desc: "Weeding of the existing beds while on site \u2014 added by Paul.", finalC: 30000 }
+    ],
+    deposits: [ { doc: "6470", forDoc: "7050", amtC: 292499, status: "paid", when: "paid July 8, 2026" } ]
+  },
+
+  bethke: {
+    customer: "Connie Bethke", planLine: "Paver patio — 1 job, confirmed Aug 2",
+    nextDoc: "D7109", createdAt: "Aug 6, 11:05 AM", theirTotalC: 0,
+    recipients: ["cbethke@charter.net"],
+    taxRate: 0.055, taxLabel: "Sales tax (WI 5.5%)",
+    held: 3,
+    coverage: [
+      { doc: "7041", date: "May 28, 2026", totalC: 548600, kind: "plan", included: true,
+        cmemo: "Thank you for your business. A 50% deposit is required to schedule.",
+        pmemo: "Patio + steps per the site walk.",
+        depTag: "Deposit 6466 \u00b7 paid Jun 3" }
+    ],
+    backstop: [
+      { doc: "6466", kind: "Deposit invoice", date: "Jun 3, 2026", totalC: 150000, status: "Paid" }
+    ],
+    groups: [
+      { doc: "7041", sub: "accepted May 28, 2026", lines: [
+        { id: "patio", name: "Paver patio", item: "Patio-Hardscape \u203a Patio",
+          desc: "Paver patio, base prepared, edge restraint. 320 square feet.",
+          q: { qty: 320, unit: "sq ft", unitOne: "sq ft", rateC: 1250, amtC: 400000 },
+          cand: null, actual: null, finalC: 400000, how: null },
+        { id: "steps", name: "Stone steps", item: "Patio-Hardscape \u203a Patio",
+          desc: "Two natural stone steps set at the walk, as discussed on site.",
+          q: { amtC: 120000, unstructured: true }, cand: null, actual: null, finalC: 120000, how: null }
+      ]}
+    ],
+    added: [],
+    deposits: [ { doc: "6466", forDoc: "7041", amtC: 150000, status: "paid", when: "paid June 3, 2026" } ]
+  },
+
+  hungness: {
+    customer: "Sonja Hungness", planLine: "Curb, rock & lighting — 2 jobs, confirmed Aug 3",
+    nextDoc: "D7110", createdAt: "Aug 6, 11:20 AM", theirTotalC: 0,
+    recipients: ["sonja.hungness@gmail.com"],
+    taxRate: 0.055, taxLabel: "Sales tax (WI 5.5%)",
+    coverage: [
+      { doc: "7062", date: "Jul 3, 2026", totalC: 1442000, kind: "plan", included: true,
+        cmemo: "Thank you for your business. A 25% deposit is required to schedule.",
+        pmemo: "Lighting priced as a package; curb and rock measured on site.",
+        depTag: "Deposit 6501 \u00b7 open \u2014 check marked in hand" }
+    ],
+    backstop: [
+      { doc: "6501", kind: "Deposit invoice", date: "Jul 24, 2026", totalC: 360500, status: "Open" },
+      { doc: "D6733", kind: "Final invoice", date: "Oct 14, 2025", totalC: 112000, status: "Paid" }
+    ],
+    groups: [
+      { doc: "7062", sub: "accepted Jul 3, 2026", lines: [
+        { id: "curb", name: "Curb Edging", item: "Curbing \u203a Curbing",
+          desc: "Concrete curb edging, colored. 410 linear feet.",
+          q: { qty: 410, unit: "ft", unitOne: "ft", rateC: 1900, amtC: 779000 },
+          cand: { qty: 410, unit: "ft", form: "Curb Edging Install", date: "Aug 2", crew: "Kian A., Kyle F.", files: 4, label: "Linear feet" },
+          actual: 410, finalC: 779000, how: "adopted" },
+        { id: "rock", name: "Decorative rock", item: "Rock-Stone \u203a Rock",
+          desc: "Decorative rock supplied and installed. Estimated 14 tons.",
+          q: { qty: 14, unit: "tons", unitOne: "ton", rateC: 30000, amtC: 420000 },
+          cand: { qty: 14, unit: "tons", form: "Rock Install", date: "Aug 2", crew: "Kian A., Kyle F.", files: 2, label: "Tons installed" },
+          actual: 14, finalC: 420000, how: "adopted" },
+        { id: "light", name: "Landscape lighting", item: "Lawncare \u203a Lighting",
+          desc: "Low-voltage lighting package \u2014 eight fixtures and transformer, installed.",
+          q: { amtC: 167825, unstructured: true }, cand: null, actual: null, finalC: 167825, how: "typed" }
+      ]}
+    ],
+    added: [],
+    deposits: [ { doc: "6501", forDoc: "7062", amtC: 360500, status: "open", chip: "Check in hand \u2014 marked Aug 1", when: "sent July 24, 2026" } ]
+  },
+
+  nelson: {
+    customer: "Bob Nelson", planLine: "Curb — 1 job, confirmed Jul 28",
+    nextDoc: "D7111", createdAt: "", theirTotalC: 0,
+    recipients: ["bnelson52@yahoo.com"],
+    taxRate: 0.055, taxLabel: "Sales tax (WI 5.5%)",
+    coverage: [
+      { doc: "7055", date: "Jun 2, 2026", totalC: 673090, kind: "plan", included: true,
+        cmemo: "Thank you for your business.",
+        pmemo: "Customer prepaid the job in full ahead of install.",
+        depTag: "Deposit 6480 \u00b7 paid Jun 5" }
+    ],
+    backstop: [
+      { doc: "6480", kind: "Deposit invoice", date: "Jun 5, 2026", totalC: 620000, status: "Paid" }
+    ],
+    groups: [
+      { doc: "7055", sub: "accepted Jun 2, 2026", lines: [
+        { id: "curb", name: "Curb Edging", item: "Curbing \u203a Curbing",
+          desc: "Concrete curb edging, colored. 310 linear feet.",
+          q: { qty: 310, unit: "ft", unitOne: "ft", rateC: 2000, amtC: 620000 },
+          cand: { qty: 285, unit: "ft", form: "Curb Edging Install", date: "Jul 24", crew: "Dalton E., DJ S.", files: 2, label: "Linear feet" },
+          actual: 285, finalC: 570000, how: "adopted" },
+        { id: "seal", name: "Sealer application", item: "Curbing \u203a Curbing", slim: true, descoped: true,
+          tag: "Descoped \u2014 kept at $0.00 so the change is visible on the invoice",
+          desc: "Quoted at $180.00; the customer descoped it after the pour.", finalC: 0 }
+      ]}
+    ],
+    added: [],
+    deposits: [ { doc: "6480", forDoc: "7055", amtC: 620000, status: "paid", when: "paid June 5, 2026 \u2014 paid in full ahead of install" } ]
+  },
+
+  schaefer: {
+    customer: "Ren Schaefer", planLine: "Walkway & front bed — 2 jobs, confirmed Aug 4",
+    nextDoc: "D7112", createdAt: "Aug 6, 11:40 AM", theirTotalC: 0,
+    recipients: ["ren.schaefer@gmail.com"],
+    taxRate: 0.055, taxLabel: "Sales tax (WI 5.5%)",
+    coverage: [
+      { doc: "7100", date: "Jul 18, 2026", totalC: 214165, kind: "plan", included: true,
+        cmemo: "Option 1 as discussed.", pmemo: "Option 1 of 2 \u2014 paver walkway.",
+        depTag: "Deposit 7018 \u00b7 paid Jul 22" },
+      { doc: "7101", date: "Jul 18, 2026", totalC: 439935, kind: "notsel", included: false,
+        cmemo: "Option 2 as discussed.", pmemo: "Option 2 of 2 \u2014 extended walkway + steps.",
+        sub: "Part of the same proposal \u2014 the customer chose Option 1." },
+      { doc: "7115", date: "Jul 29, 2026", totalC: 89675, kind: "pending", included: true,
+        cmemo: "Front bed add-on.", pmemo: "Add-on quoted after the walkthrough.",
+        depTag: "Deposit 7042 \u00b7 paid Jul 29" },
+      { doc: "6841", date: "Aug 30, 2025", totalC: 208890, kind: "blocked",
+        cmemo: "Fall cleanup and edging.", pmemo: "Last season\u2019s job.",
+        blockText: "Covered by final invoice D6902, sent September 12, 2025. An estimate covered by a live final cannot be selected again." }
+    ],
+    backstop: [
+      { doc: "D6902", kind: "Final invoice", date: "Sep 12, 2025", totalC: 208890, status: "Paid" },
+      { doc: "7018", kind: "Deposit invoice", date: "Jul 22, 2026", totalC: 107083, status: "Paid" },
+      { doc: "7042", kind: "Deposit invoice", date: "Jul 29, 2026", totalC: 42500, status: "Paid" }
+    ],
+    groups: [
+      { doc: "7100", sub: "accepted Jul 20, 2026 \u2014 Option 1", lines: [
+        { id: "walk", name: "Paver walkway", item: "Patio-Hardscape \u203a Patio",
+          desc: "Paver walkway, base prepared. 145 square feet.",
+          q: { qty: 145, unit: "sq ft", unitOne: "sq ft", rateC: 1400, amtC: 203000 },
+          cand: { qty: 145, unit: "sq ft", form: "Paver Walkway Install", date: "Aug 1", crew: "Kyle B., Tommy C.", files: 4, label: "Square feet" },
+          actual: 145, finalC: 203000, how: "adopted" }
+      ]},
+      { doc: "7101", sub: "pending \u2014 Option 2", lines: [
+        { id: "walk2", name: "Extended walkway + steps", item: "Patio-Hardscape \u203a Patio",
+          desc: "Option 2 \u2014 extended paver walkway with two stone steps.",
+          q: { amtC: 417000, unstructured: true }, cand: null, actual: null, finalC: 417000, how: null }
+      ]},
+      { doc: "7115", sub: "pending \u2014 quoted Jul 29, 2026", lines: [
+        { id: "bed", name: "Front bed edging", item: "Lawncare \u203a Edging",
+          desc: "Steel edging along the front bed, installed.",
+          q: { amtC: 85000, unstructured: true }, cand: null, actual: null, finalC: 85000, how: "typed" }
+      ]}
+    ],
+    added: [],
+    deposits: [
+      { doc: "7018", forDoc: "7100", amtC: 107083, status: "paid", when: "paid July 22, 2026" },
+      { doc: "7042", forDoc: "7115", amtC: 42500, status: "paid", when: "paid July 29, 2026" }
+    ]
+  }
+};
+
+var STATES = [
+  { i: 0, deal: "vicki", step: 2, spot: "curb",
+    cap: "State 1 \u2014 a clean derivation. Estimate 7050 quoted 185 ft of curb at $17.00/ft; the crew\u2019s completion form measured 255 ft. The suggestion shows its arithmetic and was adopted into the final." },
+  { i: 1, deal: "vicki", step: 2, spot: "fabric",
+    cap: "State 2 \u2014 a prose quantity. The weed-fabric line carries no numeric quantity, so no rate can be derived: the reason is named and the final was typed by hand." },
+  { i: 2, deal: "bethke", step: 2,
+    cap: "State 3 \u2014 visits waiting to be matched. Three visits at the Bethke site are unmatched: the banner links out, suggestions are withheld, and creating stays possible \u2014 the consequence sheet names the count." },
+  { i: 3, deal: "vicki", step: 2, spot: "weed",
+    cap: "State 4 \u2014 a line added on compose. Weeding was done on site and added here; it belongs to no estimate and is tagged accordingly. The Add-a-line control sits under the Added lines group." },
+  { i: 4, deal: "hungness", step: 3, spot: "odep",
+    cap: "State 5 \u2014 an open deposit with a check in hand. Deposit invoice 6501 is unpaid in QuickBooks while the check is marked in hand, so the deposit needs an explicit choice; netting and leaving it open is recommended." },
+  { i: 5, deal: "nelson", step: 3, spot: "owed",
+    cap: "State 6 \u2014 the customer is owed money. Bob Nelson paid in full ahead of install and the work descoped below the quote; the settlement is negative, so no invoice is created and the credit points to QuickBooks. The descoped sealer line stays visible at $0.00 in Lines." },
+  { i: 6, deal: "schaefer", step: 1, spot: "cov-7101",
+    cap: "State 7 \u2014 coverage with options and a hard block. The plan\u2019s estimate is pre-selected; Option 2 shows as not selected with a one-tap disposition; an add-on is included; last season\u2019s estimate is already covered by a sent final and cannot be picked; recent invoices list at the foot." },
+  { i: 7, deal: "vicki", step: 2, spot: "weed", picker: true,
+    cap: "State 8 \u2014 a line with no QuickBooks item. The added Weeding line would post to the default Sales item; the flag says so and the item picker fixes it on the line." },
+  { i: 8, deal: "vicki", step: 4, created: true, qbEdited: true, sheet: "overwrite",
+    cap: "State 9 \u2014 review and edit after create. Invoice D7108 exists in QuickBooks and stays editable here; someone edited it in QuickBooks meanwhile, so Save opens the informed-overwrite sheet." }
+];
+
+/* ───────── live state ───────── */
+var S = null, stIdx = 0;
+
+function activate(i) {
+  stIdx = i;
+  var st = STATES[i];
+  S = clone(DEALS[st.deal]);
+  S.dealKey = st.deal;
+  S.step = st.step;
+  S.spot = st.spot || null;
+  S.pickerFor = st.picker ? "weed" : null;
+  S.created = !!st.created;
+  S.doc = S.created ? S.nextDoc : null;
+  S.qbEdited = !!st.qbEdited;
+  S.dirty = false; S.sent = false;
+  S.sheet = st.sheet ? { type: st.sheet } : null;
+  S.dispo = {};
+  S.openChoice = "net";
+  S.needScroll = true;
+  $("#cap").textContent = st.cap;
+  var tabs = document.querySelectorAll("#tabs .mock-tab");
+  for (var t = 0; t < tabs.length; t++) tabs[t].classList.toggle("is-on", +tabs[t].getAttribute("data-i") === i);
+  render();
+}
+
+/* ───────── computation ───────── */
+function covRow(doc) { for (var i = 0; i < S.coverage.length; i++) if (S.coverage[i].doc === doc) return S.coverage[i]; return null; }
+function covOn(doc) { var r = covRow(doc); return r ? !!r.included : true; }
+function includedGroups() { var out = []; for (var i = 0; i < S.groups.length; i++) if (covOn(S.groups[i].doc)) out.push(S.groups[i]); return out; }
+function allLines() {
+  var out = [], gs = includedGroups();
+  for (var i = 0; i < gs.length; i++) for (var j = 0; j < gs[i].lines.length; j++) out.push(gs[i].lines[j]);
+  for (var k = 0; k < S.added.length; k++) out.push(S.added[k]);
+  return out;
+}
+function noItemCount() { var n = 0, L = allLines(); for (var i = 0; i < L.length; i++) if (L[i].noItem) n++; return n; }
+function totals() {
+  var work = 0, disc = 0, L = allLines();
+  for (var i = 0; i < L.length; i++) { if (L[i].discount) disc += L[i].finalC; else work += L[i].finalC; }
+  var tax = Math.round(work * S.taxRate);
+  var inv = work + disc + tax;
+  var dep = 0, depLines = [], voidFirst = false;
+  for (var d = 0; d < S.deposits.length; d++) {
+    var D = S.deposits[d];
+    if (!covOn(D.forDoc)) continue;
+    if (D.status === "paid") { dep += D.amtC; depLines.push(D); }
+    else if (D.status === "open") {
+      if (S.openChoice === "net") { dep += D.amtC; depLines.push(D); }
+      else if (S.openChoice === "full") voidFirst = true;
+    }
+  }
+  return { work: work, disc: disc, tax: tax, inv: inv, dep: dep, bal: inv - dep, depLines: depLines, voidFirst: voidFirst };
+}
+function hasOpenDeposit() { for (var i = 0; i < S.deposits.length; i++) if (S.deposits[i].status === "open" && covOn(S.deposits[i].forDoc)) return S.deposits[i]; return null; }
+function suggested(L) {
+  if (L.discount || L.descoped || L.added) return null;
+  if (S.held) return { kind: "withheld" };
+  if (L.q.unstructured) return { kind: "unstructured" };
+  if (L.actual == null || isNaN(L.actual)) return { kind: "none" };
+  var c = Math.round(L.q.rateC * L.actual);
+  return { kind: "val", c: c,
+    str: "$" + plain(L.q.rateC) + "/" + L.q.unitOne + " \u00d7 " + L.actual + " " + L.q.unit + " = " + fm(c) };
+}
+function coveredDocs() { var out = []; for (var i = 0; i < S.coverage.length; i++) if (S.coverage[i].included) out.push(S.coverage[i].doc); return out; }
+
+/* ───────── board backdrop ───────── */
+function renderBoard() {
+  var segs = ["New Leads", "Estimate Scheduled", "Sent", "Accepted / Send Deposit Invoice", "Waiting for Payment", "Ready to Schedule / Plan Jobs", "Completed / Send Final Invoice"];
+  var h = '<div class="pagehead"><h1>Pipeline</h1><p>Estimates, deposits and finals \u2014 computed from QuickBooks when the page opens.</p></div><div class="bwrap"><div class="chev">';
+  for (var i = 0; i < segs.length; i++) h += '<span class="' + (i === segs.length - 1 ? "on" : "") + '">' + segs[i] + "</span>";
+  h += '</div><div class="bsec"><h2>Completed / Send Final Invoice</h2><span class="chip chip-quiet">Needs a final \u00b7 4</span><span class="chip chip-quiet">Review &amp; send \u00b7 1</span></div>';
+  var rows = [
+    { k: "vicki", n: "Vicki Hanson", m: "1 job confirmed \u00b7 Jul 30" },
+    { k: "bethke", n: "Connie Bethke", m: "1 job confirmed \u00b7 Aug 2" },
+    { k: "hungness", n: "Sonja Hungness", m: "2 jobs confirmed \u00b7 Aug 3" },
+    { k: "nelson", n: "Bob Nelson", m: "1 job confirmed \u00b7 Jul 28" },
+    { k: "schaefer", n: "Ren Schaefer", m: "2 jobs confirmed \u00b7 Aug 4" }
+  ];
+  for (var r = 0; r < rows.length; r++) {
+    var R = rows[r], act = R.k === S.dealKey;
+    h += '<div class="brow"><b>' + R.n + "</b><span class=\"meta\">" + R.m + "</span>" +
+      (act ? '<span class="chip chip-green">Composing\u2026</span>' : '<button class="btn btn-ghost btnsm" tabindex="-1">Compose final invoice</button>') + "</div>";
+  }
+  h += "</div>";
+  $("#board").innerHTML = h;
+}
+
+/* ───────── modal render ───────── */
+function railHTML() {
+  var names = ["Coverage", "Lines", "Deposit & totals", "Review & edit", "Send"];
+  var h = '<div class="rail">';
+  for (var i = 1; i <= 5; i++) {
+    var off = (i >= 4 && !S.created);
+    h += '<button class="rp' + (S.step === i ? " cur" : "") + (off ? " off" : "") + '" data-act="rail" data-step="' + i + '"><span class="n">' + i + "</span>" + names[i - 1] + "</button>";
+  }
+  return h + "</div>";
+}
+
+function chipTag(txt, cls) { return '<span class="chip ' + cls + '">' + esc(txt) + "</span>"; }
+
+function step1HTML() {
+  var h = '<p class="lede">Choose the estimates this final invoice covers. Every live estimate for this customer is listed; the plan\u2019s estimate is already selected. Coverage is fixed once the invoice is created.</p>';
+  if (S.created) h += '<div class="fixnote">Coverage is fixed for this draft. Changing which estimates are covered means discarding the draft and composing again.</div>';
+  for (var i = 0; i < S.coverage.length; i++) {
+    var c = S.coverage[i];
+    var spot = (S.spot === "cov-" + c.doc) ? " spot" : "";
+    if (c.kind === "blocked") {
+      h += '<div class="cov blocked' + spot + '"><svg class="cov-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>' +
+        '<div class="cov-main"><div class="cov-t"><b>Estimate ' + c.doc + '</b><span class="cov-date">' + c.date + "</span>" + chipTag("Already covered", "chip-block") + "</div>" +
+        memosHTML(c) + '<div class="cov-block">' + esc(c.blockText) + "</div></div>" +
+        '<div class="cov-side"><div class="cov-amt">' + fm(c.totalC) + '</div><button class="link-btn" data-act="qb">View in QuickBooks</button></div></div>';
+      continue;
+    }
+    var badges = "";
+    if (c.kind === "plan") badges += chipTag("Plan estimate", "chip-green");
+    if (c.kind === "pending") badges += chipTag("Pending", "chip-quiet");
+    if (c.kind === "notsel") badges += chipTag("Not selected \u2014 " + fm(c.totalC), "chip-adv");
+    var body = '<div class="cov' + spot + '"><input type="checkbox" data-act="cov" data-doc="' + c.doc + '"' + (c.included ? " checked" : "") + (S.created ? " disabled" : "") + ">" +
+      '<div class="cov-main"><div class="cov-t"><b>Estimate ' + c.doc + '</b><span class="cov-date">' + c.date + "</span>" + badges + "</div>" + memosHTML(c);
+    if (c.depTag) body += '<div class="cov-dep">' + chipTag(c.depTag, "chip-quiet") + "</div>";
+    if (c.sub) body += '<div class="cov-sub">' + esc(c.sub) + "</div>";
+    if (c.kind === "notsel") {
+      body += S.dispo[c.doc]
+        ? '<div class="cov-dep">' + chipTag("Marked " + S.dispo[c.doc] + " in QuickBooks", "chip-ok") + "</div>"
+        : '<div class="dispo-btns" style="margin-top:7px"><button class="btn btn-ghost btnsm" data-act="dispo" data-kind="Rejected" data-doc="' + c.doc + '">Mark rejected in QuickBooks</button></div>';
+    }
+    if (c.kind === "pending" && !c.included && !S.created) {
+      body += S.dispo[c.doc]
+        ? '<div class="cov-dep">' + chipTag("Marked " + S.dispo[c.doc] + " in QuickBooks", "chip-ok") + "</div>"
+        : '<div class="dispo">This estimate stays pending in QuickBooks. If it will not be billed, it can be marked here \u2014 nothing is emailed to the customer.' +
+          '<div class="dispo-btns"><button class="btn btn-ghost btnsm" data-act="dispo" data-kind="Rejected" data-doc="' + c.doc + '">Mark rejected</button>' +
+          '<button class="btn btn-ghost btnsm" data-act="dispo" data-kind="Closed" data-doc="' + c.doc + '">Mark closed</button></div></div>';
+    }
+    body += '</div><div class="cov-side"><div class="cov-amt">' + fm(c.totalC) + '</div><button class="link-btn" data-act="qb">View in QuickBooks</button></div></div>';
+    h += body;
+  }
+  h += '<div class="bks"><div class="bks-h">Recent invoices for this customer</div><div class="bks-n">Shown for a quick check that none of this work has already been billed. Memos appear as written; nothing is read from them automatically.</div>';
+  for (var b = 0; b < S.backstop.length; b++) {
+    var B = S.backstop[b];
+    h += '<div class="bk-r"><span class="bk-doc">' + B.doc + '</span><span class="bk-k">' + B.kind + " \u00b7 " + B.date + '</span><span class="bk-a">' + fm(B.totalC) + "</span>" +
+      chipTag(B.status, B.status === "Paid" ? "chip-ok" : "chip-adv") + "</div>";
+  }
+  h += "</div>";
+  return h;
+}
+function memosHTML(c) {
+  return '<div class="cov-memos"><div><span>Customer memo:</span>' + esc(c.cmemo || "\u2014") + "</div><div><span>Internal memo:</span>" + esc(c.pmemo || "\u2014") + "</div></div>";
+}
+
+function linesHTML() {
+  var h = "";
+  if (S.held) {
+    h += '<div class="heldban"><div class="hb-t">' + S.held + ' visits at this site are waiting to be matched to a job.</div>' +
+      '<div class="hb-b">Their measurements are not shown here until they are matched, so these lines may be missing work. Matching them first gives this invoice the full picture. <button class="link-btn" data-act="match">Open the matching list</button></div></div>';
+  }
+  var gs = includedGroups();
+  for (var g = 0; g < gs.length; g++) {
+    var G = gs[g];
+    h += '<div class="ghead"><b>Estimate ' + G.doc + "</b><span>" + esc(G.sub) + "</span></div>";
+    for (var i = 0; i < G.lines.length; i++) h += lineCard(G.lines[i]);
+  }
+  h += '<div class="ghead"><b>Added lines</b><span>work done on site that is on no estimate</span></div>';
+  for (var a = 0; a < S.added.length; a++) h += lineCard(S.added[a]);
+  h += '<div class="addwrap"><button class="btn btn-ghost btnsm" data-act="addline">+ Add a line</button></div>';
+  return h;
+}
+
+function lineCard(L) {
+  var spot = (S.spot === L.id) ? " spot" : "";
+  if (L.slim) {
+    var tags = "";
+    if (L.tag) tags += chipTag(L.tag, L.descoped ? "chip-adv" : "chip-quiet");
+    if (L.added) tags += chipTag("Added here \u2014 not on an estimate", "chip-quiet");
+    if (L.noItem) tags += chipTag("No item set \u2014 posts to Sales", "chip-adv");
+    else if (L.item) tags += chipTag(L.item, "chip-quiet");
+    var flag = "";
+    if (L.noItem) {
+      flag = '<div class="flagline">This line carries no QuickBooks item, so its revenue posts to the default Sales item. Choosing an item files it correctly. ';
+      flag += (S.pickerFor === L.id)
+        ? '</div><select class="pick" data-act="pick" data-line="' + L.id + '"><option value="">Choose an item\u2026</option><option>Lawncare \u203a Weeding</option><option>Curbing \u203a Curbing</option><option>Rock-Stone \u203a Rock</option><option>Rock-Stone \u203a Fabric</option><option>Sales (default)</option></select>'
+        : '<button class="link-btn" data-act="pickopen" data-line="' + L.id + '">Choose an item</button></div>';
+    }
+    var nm = L.editing
+      ? '<input class="nm" data-act="nm" data-line="' + L.id + '" placeholder="Line name" value="' + esc(L.name) + '">'
+      : '<span class="lc-name">' + esc(L.name) + "</span>";
+    return '<div class="lc slim' + spot + '" data-line="' + L.id + '"><div class="slim-row"><div class="slim-main"><div class="lc-head">' + nm + tags + "</div>" +
+      '<div class="lc-desc">' + esc(L.desc || "") + "</div>" + flag + "</div>" +
+      '<div class="slim-amt"><div class="fk">Final</div>' + moneyInput(L) + "</div></div></div>";
+  }
+  var head = '<div class="lc-head"><span class="lc-name">' + esc(L.name) + "</span>" + (L.item ? chipTag(L.item, "chip-quiet") : "") + "</div>";
+  var quoted = L.q.unstructured
+    ? '<div class="fv fmute">Not structured \u2014 see the description.</div><div class="famt">' + fm(L.q.amtC) + "</div>"
+    : '<div class="fv">' + L.q.qty + " " + L.q.unit + " \u00d7 $" + plain(L.q.rateC) + "/" + L.q.unitOne + '</div><div class="famt">' + fm(L.q.amtC) + "</div>";
+  var meas = "";
+  if (S.held) meas = '<div class="fmute">\u2014</div>';
+  else {
+    if (L.cand) meas += '<button class="candchip' + (L.actual === L.cand.qty ? " is-on" : "") + '" data-act="cand" data-line="' + L.id + '">' + L.cand.qty + " " + L.cand.unit + " \u2014 crew form \u00b7 " + L.cand.date + "</button><br>";
+    if (!L.q.unstructured) meas += '<input class="qty" data-act="qtyin" data-line="' + L.id + '" placeholder="Type a quantity" value="' + (L.actual == null ? "" : L.actual) + '">';
+    else meas += '<div class="fmute">No form field carries this line\u2019s quantity.</div>';
+  }
+  var sg = suggested(L), sug = "";
+  if (sg) {
+    if (sg.kind === "val") {
+      sug = '<div class="sugg-str">' + sg.str + "</div>";
+      sug += (L.finalC === sg.c)
+        ? '<div class="use-wrap">' + chipTag("Adopted", "chip-ok") + "</div>"
+        : '<div class="use-wrap"><button class="btn btn-ghost btnsm" data-act="use" data-line="' + L.id + '">Use ' + fm(sg.c) + "</button></div>";
+    }
+    else if (sg.kind === "withheld") sug = '<div class="sugg-why">Withheld while visits at this site wait to be matched.</div>';
+    else if (sg.kind === "unstructured") sug = '<div class="sugg-why">No suggestion \u2014 the quoted line carries no numeric quantity, so a per-unit rate cannot be derived.</div>';
+    else sug = '<div class="sugg-why">No measured quantity yet.</div>';
+  }
+  var fchip = "";
+  if (sg && sg.kind === "val" && L.finalC === sg.c) fchip = "";
+  else if (L.how === "typed") fchip = '<span class="fchip">' + chipTag("Entered by hand", "chip-quiet") + "</span>";
+  var evi = "";
+  if (L.cand && L.actual === L.cand.qty && !S.held) {
+    evi = '<div class="evi">From the crew\u2019s form \u2014 ' + esc(L.cand.form) + " \u00b7 " + L.cand.date + " \u00b7 " + esc(L.cand.crew) + " \u00b7 " + esc(L.cand.label) + ": " + L.cand.qty +
+      ' \u00b7 <button class="files-btn" data-act="files">' + L.cand.files + " files</button></div>";
+  }
+  return '<div class="lc' + spot + '" data-line="' + L.id + '">' + head +
+    '<div class="lc-desc">' + esc(L.desc) + "</div>" +
+    '<div class="lgrid"><div class="cell"><div class="fk">Quoted</div>' + quoted + "</div>" +
+    '<div class="cell"><div class="fk">Measured</div>' + meas + "</div>" +
+    '<div class="cell"><div class="fk">Suggested</div>' + sug + "</div>" +
+    '<div class="cell"><div class="fk">Final</div>' + moneyInput(L) + fchip + "</div></div>" + evi + "</div>";
+}
+function moneyInput(L) {
+  return '<div class="moneywrap"><span>$</span><input class="money" data-act="fin" data-line="' + L.id + '" value="' + (L.finalC < 0 ? "\u2212" : "") + plain(L.finalC) + '"></div>';
+}
+
+function totalsHTML(t) {
+  var h = '<div class="tot"><div class="t-r"><span>Work total</span><span class="amt">' + fm(t.work) + "</span></div>";
+  if (t.disc) h += '<div class="t-r"><span>Discount</span><span class="amt">' + fm(t.disc) + "</span></div>";
+  h += '<div class="t-r"><span>' + S.taxLabel + '</span><span class="amt">' + fm(t.tax) + "</span></div>";
+  h += '<div class="t-r t-strong"><span>Invoice total</span><span class="amt">' + fm(t.inv) + "</span></div>";
+  for (var i = 0; i < t.depLines.length; i++) {
+    var d = t.depLines[i];
+    var lbl = d.status === "open"
+      ? "Deposit \u2014 invoice " + d.doc + " \u00b7 netted; the deposit invoice stays open"
+      : "Deposit \u2014 invoice " + d.doc + " \u00b7 " + d.when;
+    h += '<div class="t-r t-dep"><span>' + esc(lbl) + '</span><span class="amt">' + fm(-d.amtC) + "</span></div>";
+  }
+  if (t.voidFirst) h += '<div class="t-r t-dep"><span>Deposit invoice ' + hasOpenDeposit().doc + ' will be voided before this invoice is created.</span><span class="amt">\u2014</span></div>';
+  h += '<div class="t-r t-grand"><span>Balance due</span><span class="amt">' + fm(t.bal) + "</span></div></div>";
+  return h;
+}
+
+function step3HTML() {
+  var t = totals();
+  var h = '<p class="lede">Totals for this invoice. Each paired deposit is netted as its own line.</p>';
+  var od = hasOpenDeposit();
+  if (od) {
+    var spot = S.spot === "odep" ? " spot" : "";
+    h += '<div class="odep' + spot + '"><div class="odep-head"><b>Deposit invoice ' + od.doc + " is still open \u2014 " + fm(od.amtC) + ".</b>" +
+      (od.chip ? chipTag(od.chip, "chip-adv") : "") + "</div>" +
+      '<div class="odep-intro">QuickBooks shows no payment on this deposit yet, so this final needs an explicit choice:</div>' +
+      oopt("net", "Net the deposit and leave its invoice open",
+        "The final bills the balance after the deposit; invoice " + od.doc + " stays open in QuickBooks until the check is recorded against it.",
+        od.chip ? chipTag("Recommended \u2014 a check is marked in hand", "chip-ok") : "") +
+      oopt("full", "Bill the full amount and void the deposit invoice",
+        "Invoice " + od.doc + " is voided first; this final then bills the whole job.", "") +
+      oopt("wait", "Wait for the payment to be recorded",
+        "No invoice is created yet; this compose can be reopened once the payment is in QuickBooks.", "") +
+      (S.openChoice === "wait" ? '<div class="waitnote">Holding \u2014 the invoice is not created while Wait is selected.</div>' : "") +
+      "</div>";
+  }
+  h += totalsHTML(t);
+  if (t.bal < 0) {
+    var spot2 = S.spot === "owed" ? " spot" : "";
+    h += '<div class="owed' + spot2 + '"><div class="ow-t">The customer is owed ' + fm(Math.abs(t.bal)) + '.</div>' +
+      '<div class="ow-b">The netted deposits exceed the final total, so there is nothing to invoice \u2014 QuickBooks cannot send an invoice for a negative balance. The credit is recorded in QuickBooks instead.</div>' +
+      '<button class="btn btn-ghost" data-act="qb">Open in QuickBooks</button></div>';
+  }
+  return h;
+}
+function oopt(v, title, sub, extra) {
+  return '<label class="oopt"><input type="radio" name="odep" value="' + v + '" data-act="odep"' + (S.openChoice === v ? " checked" : "") + "><div><b>" + title + "</b> " + extra +
+    '<div class="oopt-s">' + sub + "</div></div></label>";
+}
+
+function step4HTML() {
+  var t = totals();
+  var h = '<div class="crhead"><div class="cr-t">Invoice ' + S.doc + " \u2014 created in QuickBooks \u00b7 " + S.createdAt +
+    (S.dirty ? " " + chipTag("Unsaved changes", "chip-adv") : "") + "</div>" +
+    '<div class="cr-s">The figures below were read back from QuickBooks and match this screen.</div></div>' +
+    '<p class="lede">Lines stay editable here. Saving updates invoice ' + S.doc + ' in QuickBooks; nothing is emailed until the Send step.</p>' +
+    '<div class="fixnote">Coverage is fixed for this draft. Changing which estimates are covered means discarding the draft and composing again.</div>' +
+    '<div class="actrow"><button class="btn btn-green" data-act="save">Save changes</button>' +
+    '<button class="btn btn-ghost" data-act="qb">Open in QuickBooks</button>' +
+    '<button class="btn btn-danger" data-act="discard">Discard draft\u2026</button></div>';
+  h += linesHTML();
+  h += totalsHTML(t);
+  return h;
+}
+
+function step5HTML() {
+  var h = '<p class="lede">QuickBooks emails the invoice with its PDF attached. The addresses below apply to this send.</p>' +
+    '<div class="fieldlab">Send to</div><div class="recips">';
+  for (var i = 0; i < S.recipients.length; i++) {
+    h += '<span class="rchip">' + esc(S.recipients[i]) + '<button data-act="rdel" data-i="' + i + '" title="Remove">\u00d7</button></span>';
+  }
+  h += '</div><div class="radd"><input id="radd-in" placeholder="Add an email address"><button class="btn btn-ghost btnsm" data-act="radd">Add</button></div>' +
+    '<div class="helper">Addresses added here apply to this invoice only.</div>';
+  if (S.sent) h += '<div style="margin-top:12px">' + chipTag("Sent \u2014 Aug 6, 11:02 AM", "chip-ok") + "</div>";
+  return h;
+}
+
+function footHTML() {
+  var t = totals();
+  var h = '<div class="m-foot">';
+  if (S.step > 1 && S.step < 4) h += '<button class="btn btn-ghost" data-act="back">Back</button>';
+  if (S.step === 5) h += '<button class="btn btn-ghost" data-act="back">Back</button>';
+  h += '<div class="sp"></div>';
+  if (S.step === 1 || S.step === 2) h += '<button class="btn btn-green" data-act="next">Continue</button>';
+  if (S.step === 3) {
+    if (t.bal < 0) { /* the owed panel carries Open in QuickBooks; nothing to create */ }
+    else h += '<button class="btn btn-green" data-act="create"' + (S.openChoice === "wait" && hasOpenDeposit() ? " disabled" : "") + ">Create invoice\u2026</button>";
+  }
+  if (S.step === 4) h += '<button class="btn btn-green" data-act="tosend">Continue to send</button>';
+  if (S.step === 5) h += '<button class="btn btn-green" data-act="send"' + (S.sent ? " disabled" : "") + ">Send invoice\u2026</button>";
+  return h + "</div>";
+}
+
+function render() {
+  renderBoard();
+  var body = "";
+  if (S.step === 1) body = step1HTML();
+  else if (S.step === 2) body = '<p class="lede">Lines from the covered estimates. Quoted figures come from the estimate, measured quantities come from the crew\u2019s completion forms, and the final column is what the invoice will bill.</p>' + linesHTML();
+  else if (S.step === 3) body = step3HTML();
+  else if (S.step === 4) body = step4HTML();
+  else body = step5HTML();
+  $("#modal").innerHTML =
+    '<div class="m-head"><div><div class="m-title">Final invoice \u2014 ' + esc(S.customer) + '</div><div class="m-sub">' + esc(S.planLine) + '</div></div>' +
+    '<button class="m-close" data-act="close" title="Close">\u00d7</button></div>' +
+    railHTML() + '<div class="m-body">' + body + "</div>" + footHTML();
+  renderSheet();
+  if (S.needScroll) {
+    S.needScroll = false;
+    var el = $("#modal .spot");
+    if (el && typeof el.scrollIntoView === "function") { try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch (e) {} }
+  }
+}
+
+/* ───────── sheets ───────── */
+function renderSheet() {
+  var layer = $("#sheetlayer");
+  if (!S.sheet) { layer.innerHTML = ""; return; }
+  var t = totals(), type = S.sheet.type, h = "";
+  var docs = coveredDocs();
+  if (type === "create") {
+    var depv = t.depLines.length
+      ? fm(t.dep) + " (invoice" + (t.depLines.length > 1 ? "s" : "") + " " + t.depLines.map(function (d) { return d.doc; }).join(", ") + ")" + (hasOpenDeposit() && S.openChoice === "net" ? " \u2014 invoice " + hasOpenDeposit().doc + " stays open in QuickBooks" : "")
+      : (t.voidFirst ? "None \u2014 invoice " + hasOpenDeposit().doc + " is voided first" : "None");
+    h = sheet("Create this invoice in QuickBooks?", "",
+      [["Total", fm(t.inv)], ["Covers", "Estimate" + (docs.length > 1 ? "s" : "") + " " + docs.join(", ")], ["Deposits netted", depv]],
+      warns(),
+      "The invoice is created as a draft in QuickBooks. Nothing is emailed to the customer at this step.",
+      [["Cancel", "btn-ghost", "sheet-x"], ["Create invoice", "btn-green", "docreate"]]);
+  }
+  else if (type === "send") {
+    var rows = [["Invoice", S.doc + " \u00b7 " + fm(t.inv)], ["Balance due", fm(t.bal)], ["To", S.recipients.join(", ")]];
+    if (hasOpenDeposit() && S.openChoice === "net") rows.push(["Deposit", "Netted; invoice " + hasOpenDeposit().doc + " stays open in QuickBooks."]);
+    h = sheet("Send this invoice?", "", rows, warns(), "Sending is immediate.",
+      [["Cancel", "btn-ghost", "sheet-x"], ["Send invoice", "btn-green", "dosend"]]);
+  }
+  else if (type === "discard") {
+    h = sheet("Discard this draft?", "Invoice " + S.doc + " will be voided in QuickBooks. Nothing is emailed to the customer.", null, "", "",
+      [["Cancel", "btn-ghost", "sheet-x"], ["Discard and void", "btn-danger", "dodiscard"]]);
+  }
+  else if (type === "overwrite") {
+    h = sheet("This invoice changed in QuickBooks.",
+      "Invoice " + S.doc + " was edited in QuickBooks after this draft was created \u2014 it now totals " + fm(S.theirTotalC) + ", while this screen totals " + fm(t.inv) + ". Saving replaces the QuickBooks version with the one shown here.",
+      null, "", "",
+      [["Cancel", "btn-ghost", "sheet-x"], ["Open in QuickBooks", "btn-ghost", "qb"], ["Overwrite with my version", "btn-green", "dooverwrite"]]);
+  }
+  layer.innerHTML = '<div class="scrim" data-act="scrim">' + h + "</div>";
+}
+function warns() {
+  var w = "";
+  if (S.held) w += '<div class="sh-warn">' + S.held + " visits at this site are still waiting to be matched and are not reflected in these lines.</div>";
+  var n = noItemCount();
+  if (n) w += '<div class="sh-warn">' + n + " line" + (n > 1 ? "s have" : " has") + " no item set and will post to the default Sales item.</div>";
+  return w;
+}
+function sheet(title, sub, rows, warn, note, btns) {
+  var h = '<div class="sheet"><div class="sheet-title">' + title + "</div>";
+  if (sub) h += '<div class="sheet-sub">' + sub + "</div>";
+  if (rows) {
+    h += '<div class="sheet-list">';
+    for (var i = 0; i < rows.length; i++) h += '<div class="sh-r"><span class="sh-k">' + rows[i][0] + '</span><span class="sh-v">' + rows[i][1] + "</span></div>";
+    h += "</div>";
+  }
+  h += warn || "";
+  if (note) h += '<div class="sheet-note">' + note + "</div>";
+  h += '<div class="sheet-btns">';
+  for (var b = 0; b < btns.length; b++) h += '<button class="btn ' + btns[b][1] + '" data-act="' + btns[b][2] + '">' + btns[b][0] + "</button>";
+  return h + "</div></div>";
+}
+
+/* ───────── toast ───────── */
+var toastT = null;
+function toast(msg) {
+  var el = $("#toast");
+  if (!el) { el = document.createElement("div"); el.id = "toast"; document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false;
+  if (toastT) clearTimeout(toastT);
+  toastT = setTimeout(function () { el.hidden = true; }, 5200);
+}
+
+/* ───────── events ───────── */
+function findLine(id) {
+  for (var g = 0; g < S.groups.length; g++) for (var i = 0; i < S.groups[g].lines.length; i++) if (S.groups[g].lines[i].id === id) return S.groups[g].lines[i];
+  for (var a = 0; a < S.added.length; a++) if (S.added[a].id === id) return S.added[a];
+  return null;
+}
+function markDirty() { if (S.created) S.dirty = true; }
+
+document.addEventListener("click", function (ev) {
+  var el = ev.target.closest ? ev.target.closest("[data-act]") : null;
+  if (!el) return;
+  var act = el.getAttribute("data-act");
+
+  if (el.classList.contains("mock-tab")) return; /* handled below */
+
+  if (act === "rail") {
+    var st = +el.getAttribute("data-step");
+    if (st >= 4 && !S.created) { toast("The Review step exists once the invoice is created."); return; }
+    S.step = st; render(); return;
+  }
+  if (act === "back") { S.step = Math.max(1, S.step - 1); render(); return; }
+  if (act === "next") { S.step = Math.min(3, S.step + 1); render(); return; }
+  if (act === "close") { toast("The overlay closes back to the board \u2014 mockup only."); return; }
+  if (act === "qb") { toast("Opens QuickBooks in a new tab \u2014 outside this mockup."); return; }
+  if (act === "files") { toast("The media gallery opens here \u2014 the shared gallery from the visits work."); return; }
+  if (act === "match") { toast("Deep link to the visits-to-match list on the Projects page."); return; }
+
+  if (act === "dispo") {
+    var doc = el.getAttribute("data-doc"), kind = el.getAttribute("data-kind");
+    S.dispo[doc] = kind; render();
+    toast("Estimate " + doc + " was marked " + kind + " in QuickBooks."); return;
+  }
+  if (act === "cand") {
+    var L = findLine(el.getAttribute("data-line"));
+    if (L && L.cand) { L.actual = L.cand.qty; markDirty(); render(); } return;
+  }
+  if (act === "use") {
+    var L2 = findLine(el.getAttribute("data-line"));
+    var sg = L2 && suggested(L2);
+    if (sg && sg.kind === "val") { L2.finalC = sg.c; L2.how = "adopted"; markDirty(); render(); } return;
+  }
+  if (act === "pickopen") { S.pickerFor = el.getAttribute("data-line"); render(); return; }
+  if (act === "addline") {
+    S.added.push({ id: "new" + (S.added.length + 1), name: "", desc: "", finalC: 0, noItem: true, slim: true, added: true, editing: true });
+    markDirty(); render(); return;
+  }
+  if (act === "create") { S.sheet = { type: "create" }; renderSheet(); return; }
+  if (act === "save") {
+    if (S.qbEdited) { S.sheet = { type: "overwrite" }; renderSheet(); return; }
+    S.dirty = false; render(); toast("Saved \u2014 invoice " + S.doc + " was updated in QuickBooks."); return;
+  }
+  if (act === "discard") { S.sheet = { type: "discard" }; renderSheet(); return; }
+  if (act === "tosend") { S.step = 5; render(); return; }
+  if (act === "send") { S.sheet = { type: "send" }; renderSheet(); return; }
+
+  if (act === "sheet-x" || act === "scrim") { if (ev.target === el || act === "sheet-x") { S.sheet = null; renderSheet(); } return; }
+  if (act === "docreate") {
+    S.created = true; S.doc = S.nextDoc; S.sheet = null; S.step = 4; render();
+    toast("Invoice " + S.doc + " was created in QuickBooks. Nothing has been emailed to the customer."); return;
+  }
+  if (act === "dosend") {
+    S.sent = true; S.sheet = null; render();
+    toast("Invoice " + S.doc + " was emailed to " + S.recipients.length + " address" + (S.recipients.length > 1 ? "es" : "") + "."); return;
+  }
+  if (act === "dodiscard") {
+    var d = S.doc; S.created = false; S.doc = null; S.dirty = false; S.sheet = null; S.step = 3; render();
+    toast("Draft discarded \u2014 invoice " + d + " was voided in QuickBooks."); return;
+  }
+  if (act === "dooverwrite") {
+    S.qbEdited = false; S.dirty = false; S.sheet = null; render();
+    toast("Saved \u2014 invoice " + S.doc + " was updated in QuickBooks."); return;
+  }
+  if (act === "radd") {
+    var inp = $("#radd-in");
+    if (inp && inp.value.trim()) { S.recipients.push(inp.value.trim()); inp.value = ""; render(); }
+    return;
+  }
+  if (act === "rdel") { S.recipients.splice(+el.getAttribute("data-i"), 1); render(); return; }
+});
+
+document.addEventListener("change", function (ev) {
+  var el = ev.target.closest ? ev.target.closest("[data-act]") : null;
+  if (!el) return;
+  var act = el.getAttribute("data-act");
+  if (act === "cov") {
+    var r = covRow(el.getAttribute("data-doc"));
+    if (r) { r.included = el.checked; render(); }
+    return;
+  }
+  if (act === "odep") { S.openChoice = el.value; render(); return; }
+  if (act === "qtyin") {
+    var L = findLine(el.getAttribute("data-line"));
+    var v = parseFloat(el.value);
+    if (L) { L.actual = isNaN(v) ? null : v; markDirty(); render(); }
+    return;
+  }
+  if (act === "fin") {
+    var L2 = findLine(el.getAttribute("data-line"));
+    var raw = el.value.replace(/[$,\s\u2212]/g, "");
+    var v2 = parseFloat(raw);
+    if (L2 && !isNaN(v2)) {
+      var neg = el.value.indexOf("\u2212") === 0 || el.value.indexOf("-") === 0 || L2.discount;
+      L2.finalC = Math.round(Math.abs(v2) * 100) * (neg && L2.discount ? -1 : (L2.discount ? -1 : 1));
+      if (!L2.discount) L2.finalC = Math.round(v2 * 100);
+      L2.how = "typed"; markDirty();
+    }
+    render(); return;
+  }
+  if (act === "nm") {
+    var L3 = findLine(el.getAttribute("data-line"));
+    if (L3) L3.name = el.value;
+    return;
+  }
+  if (act === "pick") {
+    var L4 = findLine(el.getAttribute("data-line"));
+    if (L4 && el.value && el.value.indexOf("Sales (default)") === -1) { L4.noItem = false; L4.item = el.value; S.pickerFor = null; render(); }
+    return;
+  }
+});
+
+/* mockup chrome */
+$("#tabs").addEventListener("click", function (ev) {
+  var b = ev.target.closest ? ev.target.closest(".mock-tab") : null;
+  if (b) activate(+b.getAttribute("data-i"));
+});
+$("#vw-desk").addEventListener("click", function () {
+  $("#stage").classList.remove("phone");
+  $("#vw-desk").classList.add("is-on"); $("#vw-phone").classList.remove("is-on");
+});
+$("#vw-phone").addEventListener("click", function () {
+  $("#stage").classList.add("phone");
+  $("#vw-phone").classList.add("is-on"); $("#vw-desk").classList.remove("is-on");
+});
+
+activate(0);
+})();
+</script>
+</body>
+</html>
