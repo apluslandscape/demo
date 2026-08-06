@@ -1,0 +1,1049 @@
+<!doctype html>
+<!-- MOCKUP — /equipment — the equipment and insurance register (LD-50, Phase M).
+     Static, for approval; iterated in chat until blessed, then forwarded to Jen
+     for advance review. Authority: docs/slices/equipment-registry-design-gate.md
+     (R1-R12; §4 surfaces, §5 field states, §6 obligations, §7 task contract) as
+     amended by docs/slices/equipment-registry-P-task-probe.md §8.
+     Visual donors: docs/mockups/timeclock.html (panekit ops hexes, section
+     grammar) + docs/mockups/estimate-options.html (mockup chrome convention).
+     Figures are computed against 5 August 2026 and are drawn from the written
+     record only — nothing here is invented, and nothing here saves anything.
+     The dark top bar and the caption strip are mockup chrome, not proposed
+     interface. August 2026. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Equipment register — mockup</title>
+<style>
+  /* ── Design tokens (panekit ops hexes — donor: docs/mockups/timeclock.html) ── */
+  :root {
+    --ink:       #1d2b1f;
+    --ink-soft:  #3a4a3c;
+    --ink-mute:  #5a6b5c;
+    --faint:     #8a978d;
+    --bg:        #f2f5f2;
+    --surface:   #ffffff;
+    --line:      #dbe4dc;
+    --line-soft: #e9efe9;
+    --green:     #234b34;
+    --green-mid: #2e6b43;
+    --green-brt: #46a05f;
+    --wash:      #e2f3e7;
+    --amber-bg:  #fff4e0;
+    --amber:     #8a5a00;
+    --amber-line:#f0e0bd;
+    --danger:    #b3422f;
+    --danger-bg: #fbeae6;
+    --danger-ln: #f0d3cc;
+    --block:     #7f1d1d;
+    --radius:    12px;
+    --radius-sm: 9px;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+
+    --g-strip: repeat(auto-fit, minmax(162px, 1fr));
+    --g-id:    repeat(3, minmax(0, 1fr));
+    --g-det:   1.05fr 1fr;
+    --g-two:   1fr 1fr;
+  }
+  @media (max-width: 760px) {
+    :root { --g-id: 1fr 1fr; --g-det: 1fr; --g-two: 1fr; --g-strip: repeat(auto-fit, minmax(140px, 1fr)); }
+  }
+  body.mobile { --g-id: 1fr 1fr; --g-det: 1fr; --g-two: 1fr; --g-strip: 1fr 1fr; }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  [hidden] { display: none !important; }
+  body {
+    font-family: var(--font); font-size: 14px; line-height: 1.45;
+    color: var(--ink-soft); background: var(--bg);
+    -webkit-font-smoothing: antialiased; padding-bottom: 70px;
+  }
+
+  /* ── Mockup chrome (NOT part of the proposed interface) ────────────── */
+  .mock-top { position: sticky; top: 0; z-index: 60; background: #101812; color: #e8efe9; padding: 11px 16px 12px; box-shadow: 0 6px 24px rgba(0,0,0,.28); }
+  .mock-brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 14px; font-weight: 750; }
+  .mock-brand span { font-size: 11.5px; font-weight: 500; color: #9fb3a5; }
+  .mock-rows { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; align-items: center; }
+  .mock-tab, .mock-view button { font: inherit; font-size: 12px; font-weight: 650; color: #cfe0d4; background: #1d2a20; border: 1px solid #2c3d31; border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  .mock-tab.is-on, .mock-view button.is-on { background: #46a05f; border-color: #46a05f; color: #0c130e; }
+  .mock-view { margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap; }
+  .mock-sep { width: 1px; height: 20px; background: #2c3d31; margin: 0 2px; }
+  .mock-cap { max-width: 900px; margin: 14px auto 0; padding: 11px 16px; font-size: 13px; color: #3c4a41; background: #e6ebe5; border: 1px solid #d5ddd4; border-radius: 10px; line-height: 1.5; }
+  .mock-cap b { color: #1d2b1f; }
+  .mock-note { max-width: 900px; margin: 6px auto 14px; padding: 0 16px; font-size: 11.5px; color: var(--faint); }
+  .mockcap-in { display: inline-block; background: #1d2b1f; color: #cfead6; font-size: 11px; font-weight: 650; border-radius: 999px; padding: 2px 10px; letter-spacing: .2px; margin: 4px 0 8px; }
+
+  /* ── The page ──────────────────────────────────────────────────────── */
+  .page { transition: max-width .18s ease; }
+  body.mobile .page { max-width: 404px; margin: 16px auto 0; border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: 0 12px 44px rgba(29,43,31,.14); }
+  .pagehead { background: var(--green); color: #fff; padding: 15px 18px; }
+  .pagehead h1 { margin: 0; font-size: 19px; letter-spacing: -.2px; }
+  .pagehead p { margin: 3px 0 0; font-size: 12.5px; color: #cfe0d2; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 16px 16px 30px; }
+  body.mobile .wrap { max-width: 404px; padding: 14px 13px 28px; }
+
+  .lede { font-size: 13.5px; color: var(--ink-soft); margin: 0 0 9px; line-height: 1.55; }
+  .lede strong { color: var(--ink); font-weight: 700; }
+
+  /* ── Status strip ──────────────────────────────────────────────────── */
+  .strip { display: grid; grid-template-columns: var(--g-strip); gap: 9px; margin: 14px 0 4px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; }
+  .tile .tk { font-size: 10.5px; text-transform: uppercase; letter-spacing: .45px; font-weight: 750; color: var(--faint); }
+  .tile .tv { font-size: 19px; font-weight: 750; color: var(--ink); margin-top: 3px; font-variant-numeric: tabular-nums; letter-spacing: -.3px; }
+  .tile .ts { font-size: 11.5px; color: var(--ink-mute); margin-top: 2px; line-height: 1.35; }
+  .tile.is-hot { border-color: var(--danger-ln); background: var(--danger-bg); }
+  .tile.is-hot .tv { color: var(--danger); }
+  .tile.is-warm { border-color: var(--amber-line); background: var(--amber-bg); }
+  .tile.is-warm .tv { color: var(--amber); }
+
+  /* ── Section heads ─────────────────────────────────────────────────── */
+  .sechead { display: flex; align-items: baseline; gap: 10px; margin: 30px 0 5px; flex-wrap: wrap; }
+  .secbadge { font-size: 10.5px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: #fff; background: var(--green); border-radius: 6px; padding: 3px 8px; white-space: nowrap; }
+  .sechead h2 { margin: 0; font-size: 16.5px; color: var(--ink); letter-spacing: -.2px; }
+  .seclede { font-size: 12.5px; color: var(--ink-mute); margin: 0 0 11px; line-height: 1.5; max-width: 68ch; }
+
+  /* ── Chips ─────────────────────────────────────────────────────────── */
+  .chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 3px 9px; font-size: 11.5px; font-weight: 650; white-space: nowrap; }
+  .chip svg { width: 12px; height: 12px; }
+  .chip-ok    { background: var(--wash);      color: #1e6b3a; }
+  .chip-quiet { background: #f0f3f0;          color: var(--ink-mute); }
+  .chip-warm  { background: var(--amber-bg);  color: var(--amber); }
+  .chip-hot   { background: var(--block);     color: #fff; }
+  .chip-lease { background: #eaeef7;          color: #3a4a7a; }
+  .chip-unk   { background: #f3f1ea;          color: #6b6350; }
+
+  /* ── Buttons ───────────────────────────────────────────────────────── */
+  .btn { font: inherit; border: none; border-radius: var(--radius-sm); padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .btn svg { width: 14px; height: 14px; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-ghost { background: #fff; color: var(--green); border: 1px solid var(--line); }
+  .btn-sm { padding: 6px 11px; font-size: 12.5px; }
+  .btn[disabled] { opacity: .45; cursor: default; }
+
+  /* ── Cards ─────────────────────────────────────────────────────────── */
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 13px 14px; margin-bottom: 10px; }
+  .card.is-hot  { border-left: 4px solid var(--danger); }
+  .card.is-warm { border-left: 4px solid #d79a2b; }
+  .card.is-cool { border-left: 4px solid var(--green-brt); }
+  .card.is-unrouted { border-left: 4px solid #9aa39b; }
+  .c-head { display: flex; align-items: flex-start; gap: 9px; flex-wrap: wrap; }
+  .c-title { font-size: 14.5px; font-weight: 750; color: var(--ink); flex: 1 1 260px; line-height: 1.35; }
+  .c-sub { font-size: 12.5px; color: var(--ink-mute); margin-top: 3px; }
+  .c-why { font-size: 12.5px; color: var(--ink-soft); margin: 9px 0 0; line-height: 1.5; background: var(--line-soft); border-radius: var(--radius-sm); padding: 8px 10px; }
+  .c-why em { font-style: normal; color: var(--ink); font-weight: 650; }
+  .c-settle { font-size: 12.5px; color: var(--ink-soft); margin-top: 9px; display: flex; gap: 7px; align-items: flex-start; }
+  .c-settle svg { width: 13px; height: 13px; margin-top: 2px; flex: none; color: var(--green-mid); }
+
+  /* ── Task line (the shared obligation-to-task contract) ────────────── */
+  .task { margin-top: 10px; border-top: 1px dashed var(--line); padding-top: 9px; display: flex; gap: 9px; align-items: flex-start; }
+  .task svg.tico { width: 15px; height: 15px; margin-top: 2px; flex: none; color: var(--green-mid); }
+  .task.is-unrouted svg.tico { color: #9aa39b; }
+  .t-body { flex: 1 1 auto; min-width: 0; }
+  .t-name { font-size: 13px; font-weight: 700; color: var(--ink); }
+  .t-meta { font-size: 12px; color: var(--ink-mute); margin-top: 2px; line-height: 1.45; }
+  .t-rel  { font-size: 12px; color: var(--faint); margin-top: 2px; }
+  .t-off  { color: var(--amber); font-weight: 650; }
+
+  .gateban { display: flex; gap: 10px; align-items: flex-start; background: var(--amber-bg); border: 1px solid var(--amber-line); border-radius: var(--radius); padding: 10px 13px; margin: 0 0 12px; }
+  .gateban svg { width: 16px; height: 16px; color: var(--amber); flex: none; margin-top: 1px; }
+  .gateban b { color: var(--amber); }
+  .gateban p { margin: 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; }
+
+  /* ── Routing table ─────────────────────────────────────────────────── */
+  .rtable { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .rrow { display: flex; gap: 10px; align-items: center; padding: 9px 13px; border-top: 1px solid var(--line-soft); flex-wrap: wrap; }
+  .rrow:first-child { border-top: none; }
+  .rrow .rk { flex: 1 1 240px; font-size: 13px; color: var(--ink); }
+  .rrow .rv { font-size: 13px; font-weight: 650; color: var(--green-mid); }
+  .rrow .rv.none { color: var(--faint); font-weight: 600; font-style: italic; }
+  .rrow .rn { flex-basis: 100%; font-size: 11.5px; color: var(--faint); }
+
+  /* ── Register list ─────────────────────────────────────────────────── */
+  .filters { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 11px; }
+  .fchip { font: inherit; font-size: 12.5px; font-weight: 650; color: var(--ink-soft); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  .fchip.is-on { background: var(--green); border-color: var(--green); color: #fff; }
+  .fchip .n { opacity: .7; font-weight: 600; }
+
+  .arow { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; margin-bottom: 8px; display: flex; gap: 11px; align-items: flex-start; }
+  .thumb { width: 46px; height: 46px; border-radius: 9px; flex: none; background: linear-gradient(140deg, #dfe7e0, #cbd8ce); display: flex; align-items: center; justify-content: center; color: #7d8d81; border: 1px solid var(--line); }
+  .thumb svg { width: 20px; height: 20px; }
+  .thumb.empty { background: #f4f6f4; color: #b3bdb5; border-style: dashed; }
+  .arow .ab { flex: 1 1 auto; min-width: 0; }
+  .a-name { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+  .a-meta { font-size: 12px; color: var(--ink-mute); margin-top: 3px; line-height: 1.5; }
+  .a-meta .sep { color: var(--line); margin: 0 5px; }
+  .a-chips { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+  .a-right { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+  code.raw { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; background: #f3f1ea; border: 1px solid #e6e1d2; border-radius: 5px; padding: 1px 5px; color: #6b6350; }
+
+  /* ── Field-state rendering ─────────────────────────────────────────── */
+  .unk { color: var(--faint); font-style: italic; border-bottom: 1px dotted #b9c2bb; }
+  .none-c { color: var(--ink-mute); }
+  .none-c b { color: var(--ink-soft); font-weight: 650; }
+
+  .empty { background: var(--surface); border: 1px dashed var(--line); border-radius: var(--radius); padding: 14px; text-align: left; }
+  .empty h4 { margin: 0 0 4px; font-size: 13.5px; color: var(--ink); }
+  .empty p { margin: 0; font-size: 12.5px; color: var(--ink-mute); line-height: 1.5; }
+
+  /* ── Tables ────────────────────────────────────────────────────────── */
+  table.t { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  table.t th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .45px; color: var(--faint); font-weight: 750; padding: 9px 12px; background: #f7f9f7; border-bottom: 1px solid var(--line); }
+  table.t td { padding: 9px 12px; font-size: 12.5px; color: var(--ink-soft); border-top: 1px solid var(--line-soft); vertical-align: top; }
+  table.t td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+  table.t th.num { text-align: right; }
+  table.t tr.total td { font-weight: 750; color: var(--ink); background: #f7f9f7; border-top: 1px solid var(--line); }
+  .tscroll { overflow-x: auto; border-radius: var(--radius); }
+
+  /* ── Detail panels ─────────────────────────────────────────────────── */
+  .dgrid { display: grid; grid-template-columns: var(--g-det); gap: 12px; }
+  .dpanel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .dhead { padding: 12px 14px; border-bottom: 1px solid var(--line-soft); display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+  .dhead h3 { margin: 0; font-size: 15px; color: var(--ink); flex: 1 1 200px; }
+  .dhead .dsub { font-size: 12px; color: var(--ink-mute); margin-top: 3px; flex-basis: 100%; }
+  .dbody { padding: 12px 14px; }
+  .dsec { margin-top: 15px; }
+  .dsec:first-child { margin-top: 0; }
+  .dsec h5 { margin: 0 0 7px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .45px; color: var(--faint); font-weight: 750; }
+  .fgrid { display: grid; grid-template-columns: var(--g-id); gap: 10px 14px; }
+  .fk { font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--faint); font-weight: 700; margin-bottom: 2px; }
+  .fv { font-size: 13px; color: var(--ink); line-height: 1.4; word-break: break-word; }
+  .fnote { font-size: 11.5px; color: var(--ink-mute); margin-top: 2px; line-height: 1.4; }
+
+  .dlist { display: flex; flex-direction: column; gap: 6px; }
+  .drow { display: flex; gap: 9px; align-items: center; font-size: 12.5px; padding: 7px 9px; border: 1px solid var(--line-soft); border-radius: var(--radius-sm); }
+  .drow svg { width: 14px; height: 14px; flex: none; color: var(--green-mid); }
+  .drow.miss { border-style: dashed; color: var(--ink-mute); }
+  .drow.miss svg { color: #b3bdb5; }
+  .drow .dn { flex: 1 1 auto; color: var(--ink); }
+  .drow.miss .dn { color: var(--ink-mute); }
+  .drow .dd { color: var(--faint); font-size: 11.5px; }
+
+  .pstrip { display: flex; gap: 7px; flex-wrap: wrap; }
+  .pshot { width: 76px; height: 60px; border-radius: 8px; border: 1px solid var(--line); background: linear-gradient(140deg, #e3eae4, #ccd9cf); display: flex; align-items: center; justify-content: center; color: #7d8d81; cursor: pointer; }
+  .pshot svg { width: 18px; height: 18px; }
+  .pshot.more { background: #f4f6f4; color: var(--ink-mute); font-size: 12px; font-weight: 700; border-style: dashed; }
+  .padd { width: 76px; height: 60px; border-radius: 8px; border: 1px dashed var(--line); background: #fafcfa; color: var(--faint); display: flex; align-items: center; justify-content: center; font-size: 11.5px; cursor: pointer; }
+
+  /* ── Insurer schedule preview ──────────────────────────────────────── */
+  .sched { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; font-size: 12.5px; color: var(--ink-soft); }
+  .sched h4 { margin: 0 0 2px; font-size: 14px; color: var(--ink); }
+  .sched .sm { color: var(--faint); font-size: 11.5px; margin-bottom: 10px; }
+  .sched ol { margin: 0; padding-left: 20px; }
+  .sched li { padding: 2px 0; }
+  .sched .cut { margin-top: 8px; color: var(--faint); font-size: 11.5px; }
+
+  /* ── Lightbox ──────────────────────────────────────────────────────── */
+  .lb { position: fixed; inset: 0; background: rgba(16,24,18,.82); z-index: 90; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .lb-in { background: #fff; border-radius: 14px; max-width: 520px; width: 100%; overflow: hidden; }
+  .lb-img { height: 260px; background: linear-gradient(140deg, #dfe7e0, #b9c9bd); display: flex; align-items: center; justify-content: center; color: #6f8175; }
+  .lb-img svg { width: 44px; height: 44px; }
+  .lb-bar { display: flex; gap: 10px; align-items: center; padding: 11px 14px; }
+  .lb-bar .lbt { flex: 1 1 auto; font-size: 13px; color: var(--ink); font-weight: 650; }
+
+  .foot { margin-top: 30px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 11.5px; color: var(--faint); line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="i-warn"><path d="M12 3 1.5 21h21L12 3Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9v5M12 17.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g>
+  <g id="i-clock"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5.5l3.5 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g>
+  <g id="i-shield"><path d="M12 2.5 20 6v6c0 5-3.4 8.4-8 9.5C7.4 20.4 4 17 4 12V6l8-3.5Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></g>
+  <g id="i-doc"><path d="M6 2.5h7l5 5v14H6v-19Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M13 2.5v5h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></g>
+  <g id="i-cam"><path d="M3 8h4l2-2.5h6L17 8h4v12H3V8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/></g>
+  <g id="i-check"><path d="M4 12.5 9.5 18 20 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g id="i-task"><rect x="3.5" y="4.5" width="17" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12l2.5 2.5L16 9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <g id="i-user"><circle cx="12" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g>
+  <g id="i-q"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 9.2A2.6 2.6 0 0 1 14.5 10c0 1.8-2.5 2-2.5 3.8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M12 17.2v.3" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></g>
+  <g id="i-print"><path d="M7 9V3.5h10V9M7 19H4.5v-7h15v7H17" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M7 14.5h10v6H7v-6Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></g>
+  <g id="i-truck"><path d="M2.5 6.5h11v9h-11v-9ZM13.5 10h4l3 3v2.5h-7V10Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="7" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="2"/></g>
+  <g id="i-gear"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.4 5.4l2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></g>
+  <g id="i-close"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></g>
+  <g id="i-money"><rect x="2.5" y="5.5" width="19" height="13" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></g>
+</defs></svg>
+
+<!-- ══════════ MOCKUP CHROME ══════════ -->
+<div class="mock-top">
+  <div class="mock-brand">MOCKUP — /equipment <span>the equipment and insurance register · LD-50 Phase M · not deployed, nothing saves</span></div>
+  <div class="mock-rows">
+    <button class="mock-tab is-on" data-sec="all">Whole page</button>
+    <button class="mock-tab" data-sec="s-attn">Needs attention</button>
+    <button class="mock-tab" data-sec="s-ins">Insurance</button>
+    <button class="mock-tab" data-sec="s-pay">Payments</button>
+    <button class="mock-tab" data-sec="s-reg">The register</button>
+    <button class="mock-tab" data-sec="s-item">One item</button>
+    <span class="mock-sep"></span>
+    <div class="mock-view">
+      <button id="v-gate" class="is-on">Task creation: off</button>
+      <button id="v-mob">Mobile</button>
+    </div>
+  </div>
+</div>
+
+<div class="mock-cap">
+  <b>What this is.</b> A proposed screen for the equipment and insurance register, drawn from the equipment
+  spreadsheet as it stood on 4&nbsp;August&nbsp;2026 and from the July insurance correspondence. Every figure is
+  computed against <b>5&nbsp;August&nbsp;2026</b>. Nothing here saves anything, and no task is created — the two
+  switches above the caption change what the page would look like with task creation switched on, and on a phone.
+  <br><br>
+  <b>The real page is one page, in this order.</b> The tabs are here only so a single section can be viewed on
+  its own.
+</div>
+<div class="mock-note">Only figures already written down in the design record are reproduced. Where the record does not carry a value, the mockup leaves it out rather than inventing one.</div>
+
+<!-- ══════════ THE PAGE ══════════ -->
+<div class="page">
+<div class="pagehead">
+  <h1>Equipment</h1>
+  <p>What the business owns and leases, and what each item still needs</p>
+</div>
+
+<div class="wrap">
+
+  <p class="lede">
+    This register is the record of every vehicle and every major piece of equipment the business owns, leases or
+    rents. It holds what each one is, what it is worth, whether its registration is current, what paperwork we
+    hold for it, and whether the insurer has confirmed it is on the policy.
+  </p>
+  <p class="lede">
+    Where the register does not yet know something, it says <strong>Unknown</strong>, and those are the only
+    entries that create work. Where someone has established that there is genuinely nothing to record — a machine
+    that never carried a serial number, for instance — it says <strong>None, confirmed</strong>, with who settled
+    it and when, so the same question does not come round again.
+  </p>
+
+  <div class="strip">
+    <div class="tile"><div class="tk">On the register</div><div class="tv">38</div><div class="ts">37 owned · 1 leased</div></div>
+    <div class="tile"><div class="tk">Recorded value</div><div class="tv">$938,900</div><div class="ts">one item has no value recorded</div></div>
+    <div class="tile is-hot"><div class="tk">Registrations lapsed</div><div class="tv">2</div><div class="ts">both 217 days ago</div></div>
+    <div class="tile is-warm"><div class="tk">Needs attention</div><div class="tv">9</div><div class="ts">2 of them have nobody assigned</div></div>
+    <div class="tile"><div class="tk">Monthly payments</div><div class="tv">$5,856.88</div><div class="ts">across five agreements</div></div>
+    <div class="tile is-warm"><div class="tk">Insurer confirmation</div><div class="tv">Awaiting</div><div class="ts">sent 28 July · nothing back</div></div>
+  </div>
+
+  <!-- ══════ 1 · NEEDS ATTENTION ══════ -->
+  <section id="s-attn" class="msec">
+    <div class="sechead"><span class="secbadge">1</span><h2>Needs attention</h2></div>
+    <p class="seclede">
+      Everything the register knows is outstanding, most urgent first. Each entry says what it is, why it is
+      showing, and what would settle it. Where a task has been raised, it says who was asked.
+    </p>
+
+    <div class="gateban">
+      <svg><use href="#i-warn"/></svg>
+      <p id="gate-copy"><b>Task creation is switched off.</b> With it switched on, this page would raise
+      <b>5&nbsp;tasks</b> in GoHighLevel covering 7 of the 9 entries below. The remaining 2 have nobody assigned
+      to them, so no task would be created for those until someone is.</p>
+    </div>
+
+    <!-- expired -->
+    <div class="card is-hot">
+      <div class="c-head">
+        <div class="c-title">Registration lapsed — Midsota NST20-BP trailer</div>
+        <span class="chip chip-hot"><svg><use href="#i-warn"/></svg>217 days ago</span>
+      </div>
+      <div class="c-sub">Plate YA44625 · expired 31 December 2025</div>
+      <p class="c-why">On the spreadsheet this date displays as <em>31-Dec</em> with no year, so nothing on screen
+      showed that it had lapsed in the previous December. A register that counts the days cannot hide it in a
+      date format.</p>
+      <div class="c-settle"><svg><use href="#i-check"/></svg><div><b>Settled by</b> recording a new expiry date — or by recording that the trailer is deliberately not being renewed, which is equally an answer.</div></div>
+      <div class="task">
+        <svg class="tico"><use href="#i-task"/></svg>
+        <div class="t-body">
+          <div class="t-name">Sort out the two lapsed trailer registrations</div>
+          <div class="t-meta gate-off">Would be assigned to <b>Paul Wuebben</b> · <span class="t-off">task creation is switched off</span></div>
+          <div class="t-meta gate-on" hidden>Assigned to <b>Paul Wuebben</b> · due 20 August 2026 · created in GoHighLevel on 6 August · not yet complete</div>
+          <div class="t-rel">Relates to: Midsota NST20-BP, Midsota NST22-BP</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card is-hot">
+      <div class="c-head">
+        <div class="c-title">Registration lapsed — Midsota NST22-BP trailer</div>
+        <span class="chip chip-hot"><svg><use href="#i-warn"/></svg>217 days ago</span>
+      </div>
+      <div class="c-sub">No plate recorded · expired 31 December 2025</div>
+      <div class="c-settle"><svg><use href="#i-check"/></svg><div><b>Settled by</b> recording a new expiry date, or recording that it is not being renewed. The plate is also missing and would be worth reading off at the same time.</div></div>
+      <div class="task">
+        <svg class="tico"><use href="#i-task"/></svg>
+        <div class="t-body">
+          <div class="t-name">Covered by the task above</div>
+          <div class="t-meta">Both trailers are one trip, so they share one task. A task covers an action; the register records the answers separately as they come in.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- unknown expiry -->
+    <div class="card is-hot">
+      <div class="c-head">
+        <div class="c-title">Registration date unknown — 2017 Ram 2500 HD Diesel</div>
+        <span class="chip chip-hot"><svg><use href="#i-q"/></svg>No date to count down to</span>
+      </div>
+      <div class="c-sub">Plate TZ8477 · in service · no expiry recorded and no known source for one</div>
+      <p class="c-why">This is the register's clearest gap. A blank date cannot be counted down to, so this truck
+      would never appear on any reminder list, no matter how far ahead it looked. It shows here <em>because</em>
+      the date is missing, not because a date has passed.</p>
+      <div class="c-settle"><svg><use href="#i-check"/></svg><div><b>Settled by</b> reading the expiry off the registration card or the plate sticker and recording it.</div></div>
+      <div class="task is-unrouted">
+        <svg class="tico"><use href="#i-user"/></svg>
+        <div class="t-body">
+          <div class="t-name">Part of “Read the details off the seven road vehicles”</div>
+          <div class="t-meta"><b>Nobody has been assigned to this yet.</b> No task is created until someone is, so the gap in who does it stays visible rather than being silently skipped.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- due soon -->
+    <div class="card is-warm">
+      <div class="c-head">
+        <div class="c-title">Registration due — Dodge Ram 1500 Big Horn</div>
+        <span class="chip chip-warm"><svg><use href="#i-clock"/></svg>26 days</span>
+      </div>
+      <div class="c-sub">Plate UD3346 · expires 31 August 2026</div>
+      <p class="c-why">The spreadsheet carries the note <em>“Will renew once truck is repaired”</em> against this
+      vehicle. The register keeps notes like that beside the item they belong to.</p>
+      <div class="c-settle"><svg><use href="#i-check"/></svg><div><b>Settled by</b> recording the new expiry date once it is renewed.</div></div>
+      <div class="task">
+        <svg class="tico"><use href="#i-task"/></svg>
+        <div class="t-body">
+          <div class="t-name">Renew the Ram 1500 registration by 31 August</div>
+          <div class="t-meta gate-off">Would be assigned to <b>Paul Wuebben</b> · <span class="t-off">task creation is switched off</span></div>
+          <div class="t-meta gate-on" hidden>Assigned to <b>Paul Wuebben</b> · due 31 August 2026 · created in GoHighLevel on 6 August · not yet complete</div>
+          <div class="t-rel">Relates to: Dodge Ram 1500 Big Horn</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card is-warm">
+      <div class="c-head">
+        <div class="c-title">Registration due — Ram Classic</div>
+        <span class="chip chip-warm"><svg><use href="#i-clock"/></svg>56 days</span>
+      </div>
+      <div class="c-sub">Plate UG8861 · expires 30 September 2026</div>
+      <div class="c-settle"><svg><use href="#i-check"/></svg><div><b>Settled by</b> recording the new expiry date once it is renewed.</div></div>
+      <div class="task">
+        <svg class="tico"><use href="#i-task"/></svg>
+        <div class="t-body">
+          <div class="t-name">Renew the Ram Classic registration by 30 September</div>
+          <div class="t-meta gate-off">Would be assigned to <b>Paul Wuebben</b> · <span class="t-off">task creation is switched off</span></div>
+          <div class="t-meta gate-on" hidden>Assigned to <b>Paul Wuebben</b> · due 30 September 2026 · created in GoHighLevel on 6 August · not yet complete</div>
+          <div class="t-rel">Relates to: Ram Classic</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- insurer -->
+    <div class="card is-warm">
+      <div class="c-head">
+        <div class="c-title">Insurer confirmation outstanding — Rural</div>
+        <span class="chip chip-warm"><svg><use href="#i-shield"/></svg>9 days, no reply</span>
+      </div>
+      <div class="c-sub">Full equipment schedule sent 28 July 2026 · nothing has come back</div>
+      <p class="c-why">Until a confirmed listing arrives there is no way to tell which items are actually on the
+      policy. No confirmed listing has ever been received — under the previous insurer, additions and removals
+      were sent in and nothing ever came back to say they had been made.</p>
+      <div class="c-settle"><svg><use href="#i-check"/></svg><div><b>Settled by</b> recording the date the confirmed listing arrives, which stamps each item on it as confirmed.</div></div>
+      <div class="task">
+        <svg class="tico"><use href="#i-task"/></svg>
+        <div class="t-body">
+          <div class="t-name">Chase Rural for the confirmed equipment listing</div>
+          <div class="t-meta gate-off">Would be assigned to <b>Jen Wuebben</b> · <span class="t-off">task creation is switched off</span></div>
+          <div class="t-meta gate-on" hidden>Assigned to <b>Jen Wuebben</b> · due 11 August 2026 · created in GoHighLevel on 6 August · not yet complete</div>
+          <div class="t-rel">Relates to: the insurer schedule sent 28 July 2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- avant -->
+    <div class="card is-warm">
+      <div class="c-head">
+        <div class="c-title">Ownership unclear — 2022 Avant 860i GT</div>
+        <span class="chip chip-warm"><svg><use href="#i-q"/></svg>Two records disagree</span>
+      </div>
+      <div class="c-sub">Recorded here as owned, $80,000, titled in the business</div>
+      <p class="c-why">The insurer's list carries a <em>2022 Avanta GT 800 at $49,764</em> that was sold about
+      three years ago and is still on cover. This register carries a <em>2022 Avant 860i GT at $80,000</em> as
+      owned. They may be the same machine; the model and the value do not agree, and neither record can settle
+      it on its own.</p>
+      <div class="c-settle"><svg><use href="#i-check"/></svg><div><b>Settled by</b> confirming which machine this is and whether it is still owned — then the register records it, and it either stays on the schedule or comes off.</div></div>
+      <div class="task is-unrouted">
+        <svg class="tico"><use href="#i-user"/></svg>
+        <div class="t-body">
+          <div class="t-name">Confirm which Avant machine the insurer is covering</div>
+          <div class="t-meta"><b>Nobody has been assigned to this yet.</b></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- the pass -->
+    <div class="card is-cool">
+      <div class="c-head">
+        <div class="c-title">Details to read off seven road vehicles</div>
+        <span class="chip chip-quiet">One round · four answers</span>
+      </div>
+      <div class="c-sub">Toyota Tundra · 2017 Ram 2500 HD · Ram Classic · Ram 3500 dump · Ford 550 · 2024 Ram 2500 · Ram 1500</div>
+      <p class="c-why">A single walk round the vehicles settles four things at once: the 2017 Ram's expiry date,
+      the true character in the 2018 Ram 3500's VIN, the 2011 Tundra's VIN (one character short of the seventeen
+      a VIN carries), and confirmation of the plates and expiry dates on the rest.
+      <br><br>
+      <em>The other thirty-one items are not part of this and nobody is being asked about them.</em> Sixteen of
+      them have no serial recorded, but they are not road vehicles, so nothing turns on it.</p>
+      <div class="c-settle"><svg><use href="#i-check"/></svg><div><b>Settled by</b> entering each answer as it comes in. The task is one trip; the answers close individually.</div></div>
+      <div class="task is-unrouted">
+        <svg class="tico"><use href="#i-user"/></svg>
+        <div class="t-body">
+          <div class="t-name">Read the details off the seven road vehicles</div>
+          <div class="t-meta"><b>Nobody has been assigned to this yet.</b> This is the round that would settle the 2017 Ram's registration date, which is the largest gap on the register.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- monthly -->
+    <div class="card is-cool">
+      <div class="c-head">
+        <div class="c-title">Monthly check — has anything been bought or sold?</div>
+        <span class="chip chip-ok">Recurring · monthly</span>
+      </div>
+      <p class="c-why">Purchases have gone through without the office hearing about them, and items sold have
+      stayed on the insurance policy for years. A short monthly question is what keeps the register and the
+      policy honest between renewals.</p>
+      <div class="c-settle"><svg><use href="#i-check"/></svg><div><b>Settled by</b> answering it. Anything new gets added; anything sold is marked sold and comes off the next schedule.</div></div>
+      <div class="task">
+        <svg class="tico"><use href="#i-task"/></svg>
+        <div class="t-body">
+          <div class="t-name">Anything bought or sold this month?</div>
+          <div class="t-meta gate-off">Would be assigned to <b>Paul Wuebben</b> · <span class="t-off">task creation is switched off</span></div>
+          <div class="t-meta gate-on" hidden>Assigned to <b>Paul Wuebben</b> · due 1 September 2026 · created in GoHighLevel on 6 August · not yet complete</div>
+          <div class="t-rel">Recurs on the first of each month</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- routing -->
+    <div class="sechead" style="margin-top:24px"><h2 style="font-size:15px">Who gets asked</h2></div>
+    <p class="seclede">
+      Each kind of work has one person it goes to. Where nobody is named, the register says so and creates no
+      task, so a gap in this list shows up rather than quietly swallowing the work.
+    </p>
+    <div class="rtable">
+      <div class="rrow"><div class="rk">Registration renewals</div><div class="rv">Paul Wuebben</div><div class="rn">Proposed — to be confirmed</div></div>
+      <div class="rrow"><div class="rk">Chasing the insurer's confirmed listing</div><div class="rv">Jen Wuebben</div><div class="rn">Proposed — to be confirmed</div></div>
+      <div class="rrow"><div class="rk">Monthly bought-or-sold check</div><div class="rv">Paul Wuebben</div><div class="rn">On record</div></div>
+      <div class="rrow"><div class="rk">Reading details off vehicles</div><div class="rv none">Nobody assigned</div></div>
+      <div class="rrow"><div class="rk">Questions about what is owned</div><div class="rv none">Nobody assigned</div></div>
+    </div>
+  </section>
+
+  <!-- ══════ 2 · INSURANCE ══════ -->
+  <section id="s-ins" class="msec">
+    <div class="sechead"><span class="secbadge">2</span><h2>Insurance</h2></div>
+    <p class="seclede">
+      What was sent to the insurer, when, and what has come back. The register is the record of what we own; the
+      insurer's list is a copy of it, and the two are only known to agree once a confirmation arrives.
+    </p>
+
+    <div class="card is-warm">
+      <div class="c-head">
+        <div class="c-title">Schedule sent to Rural — 28 July 2026</div>
+        <span class="chip chip-warm"><svg><use href="#i-clock"/></svg>Awaiting confirmation · 9 days</span>
+      </div>
+      <div class="c-sub">38 items · $938,900 recorded value · sent by Jen Wuebben</div>
+      <p class="c-why">Cover moved from the previous insurer in February 2026. Eleven pieces of equipment and
+      five vehicles and trailers had to be added back in July after they were found to be missing from the new
+      policy. <em>No confirmed listing has ever been received from either insurer.</em></p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:11px">
+        <button class="btn btn-green btn-sm" id="b-print"><svg><use href="#i-print"/></svg>Preview the schedule</button>
+        <button class="btn btn-ghost btn-sm"><svg><use href="#i-check"/></svg>Record a confirmation</button>
+      </div>
+      <div id="schedwrap" hidden style="margin-top:12px">
+        <div class="sched">
+          <h4>A+ Lawn Care LLC — equipment and vehicle schedule</h4>
+          <div class="sm">Prepared 5 August 2026 · 38 items · total recorded value $938,900</div>
+          <ol>
+            <li>2024 Dodge Ram 2500 — plate WG7805 — value not recorded</li>
+            <li>Dodge Ram 1500 Big Horn — plate UD3346</li>
+            <li>Ram Classic — plate UG8861</li>
+            <li>2017 Ram 2500 HD Diesel — plate TZ8477</li>
+            <li>2018 Dodge Ram 3500 Dump Body — plate EC82767</li>
+            <li>2011 Toyota Tundra — plate TM5163</li>
+            <li>Ford Super Duty 550 — plate FB59120</li>
+            <li>2022 Avant 860i GT — $80,000</li>
+            <li>Hyundai wheel loader — leased — serial HHKHWL41HL0000126</li>
+          </ol>
+          <div class="cut">…and 29 more. Each line carries the make, model, year, serial or plate and recorded value the register holds. Items marked sold are not included.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sechead" style="margin-top:22px"><h2 style="font-size:15px">Insured value against our own</h2></div>
+    <p class="seclede">
+      What we believe an item is worth, beside what the insurer has it down for. The insurer's figures are not
+      held yet, so this column fills when the confirmed listing arrives; a difference in either direction is
+      worth knowing about.
+    </p>
+    <div class="tscroll">
+      <table class="t">
+        <thead><tr><th>Item</th><th class="num">Our value</th><th class="num">Insured for</th><th>Difference</th></tr></thead>
+        <tbody>
+          <tr><td>2022 Avant 860i GT</td><td class="num">$80,000</td><td class="num"><span class="unk">Awaiting insurer</span></td><td><span class="chip chip-warm">Model and value disputed</span></td></tr>
+          <tr><td>2019 SnowEx 8611 plow (1 of 2)</td><td class="num">$8,500</td><td class="num"><span class="unk">Awaiting insurer</span></td><td>—</td></tr>
+          <tr><td>SaltDogg Pro2000 salter (1 of 2)</td><td class="num">$8,000</td><td class="num"><span class="unk">Awaiting insurer</span></td><td>—</td></tr>
+          <tr><td>2024 Dodge Ram 2500</td><td class="num"><span class="unk">Unknown</span></td><td class="num"><span class="unk">Awaiting insurer</span></td><td><span class="chip chip-quiet">No value on either side</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="seclede" style="margin-top:9px">
+      Two differences are already known without the listing: the insurer's copy carries the wrong model years for
+      the Cub Cadets, and it still covers an Avant machine recorded as sold. Neither is a fault in the register —
+      they are the reason the register is the record and the insurer's list is a copy of it.
+    </p>
+  </section>
+
+  <!-- ══════ 3 · PAYMENTS ══════ -->
+  <section id="s-pay" class="msec">
+    <div class="sechead"><span class="secbadge">3</span><h2>Payments</h2></div>
+    <p class="seclede">
+      Loans and the lease, as figures rather than as notes. On the spreadsheet these sit inside the lien-holder
+      column in ordinary prose, which is why nothing could ever add them up.
+    </p>
+    <div class="tscroll">
+      <table class="t">
+        <thead><tr><th>Agreement</th><th>Starts</th><th class="num">Monthly</th></tr></thead>
+        <tbody>
+          <tr><td>Loan — 1</td><td>Already started</td><td class="num">$805.20</td></tr>
+          <tr><td>Loan — 2</td><td>Already started</td><td class="num">$926.24</td></tr>
+          <tr><td>Loan — 3</td><td>Already started</td><td class="num">$1,676.57</td></tr>
+          <tr><td>Loan — 4</td><td>Already started</td><td class="num">$855.05</td></tr>
+          <tr><td>Loan — 5 <span class="chip chip-unk" style="margin-left:6px"><svg><use href="#i-q"/></svg>Amount uncertain</span></td><td>Already started</td><td class="num">$1,593.82</td></tr>
+          <tr class="total"><td>Five agreements</td><td></td><td class="num">$5,856.88</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="seclede" style="margin-top:9px">
+      The fifth amount is written on the spreadsheet with a question mark against it, so the register carries it
+      as uncertain rather than quietly presenting it as settled. Lenders named on the sheet include Wells Fargo,
+      Ford Motor Credit, Heartland, Bank of America and Oak Bank; which agreement belongs to which vehicle is
+      recorded per item on the register itself.
+    </p>
+
+    <div class="card" style="margin-top:12px">
+      <div class="c-head">
+        <div class="c-title">Hyundai wheel loader — the one lease</div>
+        <span class="chip chip-lease">Leased</span>
+      </div>
+      <div class="c-sub">Five-year lease with an option to buy</div>
+      <div class="fgrid" style="margin-top:11px">
+        <div><div class="fk">Lease ends</div><div class="fv"><span class="unk">Unknown</span></div><div class="fnote">Nothing on the spreadsheet records the end date.</div></div>
+        <div><div class="fk">Option to buy</div><div class="fv">Yes</div></div>
+        <div><div class="fk">Serial</div><div class="fv">HHKHWL41HL0000126</div><div class="fnote">An equipment serial, not a vehicle VIN.</div></div>
+      </div>
+      <p class="c-why">Everything else on the register is owned, some of it with a loan against it. This is the
+      only leased item, and the only one with a date on which a decision has to be made.</p>
+    </div>
+  </section>
+
+  <!-- ══════ 4 · THE REGISTER ══════ -->
+  <section id="s-reg" class="msec">
+    <div class="sechead"><span class="secbadge">4</span><h2>The register</h2></div>
+    <p class="seclede">
+      Everything on the books. Entries the register cannot yet answer are marked so they are visible at a glance;
+      they are not hidden, and they are not guessed at.
+    </p>
+
+    <div class="filters">
+      <button class="fchip is-on" data-f="all">All <span class="n">38</span></button>
+      <button class="fchip" data-f="owned">Owned <span class="n">37</span></button>
+      <button class="fchip" data-f="leased">Leased <span class="n">1</span></button>
+      <button class="fchip" data-f="rented">Rented <span class="n">0</span></button>
+      <button class="fchip" data-f="sold">Sold <span class="n">0</span></button>
+      <button class="fchip" data-f="off">Written off <span class="n">0</span></button>
+    </div>
+
+    <div id="reg-owned">
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-truck"/></svg></div><div class="ab">
+        <div class="a-name">2024 Dodge Ram 2500</div>
+        <div class="a-meta">Plate WG7805 <span class="sep">|</span> registration to 31 October 2026 <span class="sep">|</span> value <span class="unk">Unknown</span></div>
+        <div class="a-chips"><span class="chip chip-quiet">2 entries unknown</span><span class="chip chip-warm">No finance recorded</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span><span class="chip chip-quiet">87 days</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-truck"/></svg></div><div class="ab">
+        <div class="a-name">Dodge Ram 1500 Big Horn</div>
+        <div class="a-meta">Plate UD3346 <span class="sep">|</span> registration to 31 August 2026</div>
+        <div class="a-chips"><span class="chip chip-warm">Renewal due in 26 days</span><span class="chip chip-quiet">Note: will renew once repaired</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-truck"/></svg></div><div class="ab">
+        <div class="a-name">Ram Classic</div>
+        <div class="a-meta">Plate UG8861 <span class="sep">|</span> registration to 30 September 2026</div>
+        <div class="a-chips"><span class="chip chip-warm">Renewal due in 56 days</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-truck"/></svg></div><div class="ab">
+        <div class="a-name">2017 Ram 2500 HD Diesel</div>
+        <div class="a-meta">Plate TZ8477 <span class="sep">|</span> registration expiry <span class="unk">Unknown</span> <span class="sep">|</span> no finance recorded</div>
+        <div class="a-chips"><span class="chip chip-hot"><svg><use href="#i-warn"/></svg>No renewal date on record</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-truck"/></svg></div><div class="ab">
+        <div class="a-name">2018 Dodge Ram 3500 Dump Body</div>
+        <div class="a-meta">Plate EC82767 <span class="sep">|</span> registration to 31 December 2026 <span class="sep">|</span> VIN <code class="raw">3C7WRTAJoJG345375</code></div>
+        <div class="a-chips"><span class="chip chip-warm"><svg><use href="#i-q"/></svg>VIN holds a letter O — a VIN never does</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-truck"/></svg></div><div class="ab">
+        <div class="a-name">2011 Toyota Tundra</div>
+        <div class="a-meta">Plate TM5163 <span class="sep">|</span> registration to 30 November 2026 <span class="sep">|</span> VIN <code class="raw">5TFUM5F1XB020737</code></div>
+        <div class="a-chips"><span class="chip chip-warm"><svg><use href="#i-q"/></svg>16 characters — a VIN has 17</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-truck"/></svg></div><div class="ab">
+        <div class="a-name">Ford Super Duty 550</div>
+        <div class="a-meta">Plate FB59120 <span class="sep">|</span> registration to 31 January 2027</div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-truck"/></svg></div><div class="ab">
+        <div class="a-name">Midsota NST20-BP trailer</div>
+        <div class="a-meta">Plate YA44625 <span class="sep">|</span> registration expired 31 December 2025</div>
+        <div class="a-chips"><span class="chip chip-hot"><svg><use href="#i-warn"/></svg>Lapsed 217 days</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-truck"/></svg></div><div class="ab">
+        <div class="a-name">Midsota NST22-BP trailer</div>
+        <div class="a-meta">Plate <span class="unk">Unknown</span> <span class="sep">|</span> registration expired 31 December 2025</div>
+        <div class="a-chips"><span class="chip chip-hot"><svg><use href="#i-warn"/></svg>Lapsed 217 days</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-gear"/></svg></div><div class="ab">
+        <div class="a-name">2022 Avant 860i GT</div>
+        <div class="a-meta">$80,000 <span class="sep">|</span> titled in the business <span class="sep">|</span> serial <span class="unk">Unknown</span></div>
+        <div class="a-chips"><span class="chip chip-warm"><svg><use href="#i-q"/></svg>Insurer's list disagrees</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-gear"/></svg></div><div class="ab">
+        <div class="a-name">John Deere 2025 Skid 320G</div>
+        <div class="a-meta">Serial <code class="raw">iT0320GMAPJ452605</code></div>
+        <div class="a-chips"><span class="chip chip-quiet"><svg><use href="#i-q"/></svg>Leading character worth confirming</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb empty"><svg><use href="#i-cam"/></svg></div><div class="ab">
+        <div class="a-name">2019 SnowEx 8611 plow <span style="font-weight:500;color:var(--ink-mute)">(1 of 2)</span></div>
+        <div class="a-meta">$8,500 <span class="sep">|</span> serial <span class="none-c"><b>None, confirmed</b></span></div>
+        <div class="a-chips"><span class="chip chip-quiet">Identical to the second plow</span><span class="chip chip-warm">No photo yet</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb empty"><svg><use href="#i-cam"/></svg></div><div class="ab">
+        <div class="a-name">2019 SnowEx 8611 plow <span style="font-weight:500;color:var(--ink-mute)">(2 of 2)</span></div>
+        <div class="a-meta">$8,500 <span class="sep">|</span> serial <span class="none-c"><b>None, confirmed</b></span></div>
+        <div class="a-chips"><span class="chip chip-quiet">Identical to the first plow</span><span class="chip chip-warm">No photo yet</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb empty"><svg><use href="#i-cam"/></svg></div><div class="ab">
+        <div class="a-name">SaltDogg Pro2000 salter <span style="font-weight:500;color:var(--ink-mute)">(1 of 2)</span></div>
+        <div class="a-meta">$8,000 <span class="sep">|</span> year <span class="unk">Unknown</span> <span class="sep">|</span> serial <span class="none-c"><b>None, confirmed</b></span></div>
+        <div class="a-chips"><span class="chip chip-quiet">Identical to the second salter</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb empty"><svg><use href="#i-cam"/></svg></div><div class="ab">
+        <div class="a-name">SaltDogg Pro2000 salter <span style="font-weight:500;color:var(--ink-mute)">(2 of 2)</span></div>
+        <div class="a-meta">$8,000 <span class="sep">|</span> year <span class="unk">Unknown</span> <span class="sep">|</span> serial <span class="none-c"><b>None, confirmed</b></span></div>
+        <div class="a-chips"><span class="chip chip-quiet">Identical to the first salter</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-gear"/></svg></div><div class="ab">
+        <div class="a-name">Curb machine and attached trailer</div>
+        <div class="a-meta">Serial <span class="none-c"><b>None, confirmed</b> — no serial was ever stamped on this machine · Jen Wuebben, 4 August 2026</span></div>
+        <div class="a-chips"><span class="chip chip-ok"><svg><use href="#i-check"/></svg>Nothing outstanding</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+
+      <div class="arow" data-s="owned"><div class="thumb"><svg><use href="#i-gear"/></svg></div><div class="ab">
+        <div class="a-name">Kubota mower</div>
+        <div class="a-meta">Serial <span class="unk">Unknown</span></div>
+        <div class="a-chips"><span class="chip chip-quiet">Not a road vehicle — nothing is being asked</span></div>
+      </div><div class="a-right"><span class="chip chip-ok">Owned</span></div></div>
+    </div>
+
+    <div id="reg-leased">
+      <div class="arow" data-s="leased"><div class="thumb"><svg><use href="#i-gear"/></svg></div><div class="ab">
+        <div class="a-name">Hyundai wheel loader</div>
+        <div class="a-meta">Serial HHKHWL41HL0000126 <span class="sep">|</span> five-year lease with option to buy</div>
+        <div class="a-chips"><span class="chip chip-quiet">Lease end date <span class="unk" style="margin-left:4px">Unknown</span></span></div>
+      </div><div class="a-right"><span class="chip chip-lease">Leased</span></div></div>
+    </div>
+
+    <p class="seclede" id="reg-more" style="margin-top:10px">Showing 18 of 38. The rest are on the register in the same form.</p>
+
+    <div id="reg-rented" hidden class="empty">
+      <h4>Nothing is recorded as rented</h4>
+      <p>Rented items belong here for as long as they are on site, so that they come off the insurance policy when
+      they go back. Two recent rentals — a lift kept for a single day, and a wheel loader with its buckets — stayed
+      on cover after they were returned, because there was nowhere to record that they had gone.</p>
+    </div>
+
+    <div id="reg-sold" hidden class="empty">
+      <h4>Nothing is recorded as sold</h4>
+      <p>Sold items are never deleted; they stay here, marked sold, and they stop appearing on the insurance
+      schedule. The spreadsheet has no column for this, which is how a machine sold about three years ago is still
+      on the insurer's list today.</p>
+    </div>
+
+    <div id="reg-off" hidden class="empty">
+      <h4>Nothing is recorded as written off</h4>
+      <p>An item destroyed or scrapped is marked here rather than removed, so the record of what was owned, and
+      when, stays complete.</p>
+    </div>
+
+    <!-- entries needing a person -->
+    <div class="sechead" style="margin-top:24px"><h2 style="font-size:15px">Entries that need a person to read them</h2></div>
+    <p class="seclede">
+      Cells on the spreadsheet holding something other than what the column is for. The register keeps them
+      exactly as they were written, because a value quietly corrected is a value nobody knows to check.
+    </p>
+    <div class="tscroll">
+      <table class="t">
+        <thead><tr><th>What is recorded</th><th>Where</th><th>What is odd about it</th></tr></thead>
+        <tbody>
+          <tr><td><code class="raw">pauls black truck</code></td><td>VIN column</td><td>A description of a vehicle where its number should be.</td></tr>
+          <tr><td><code class="raw">Will renew once truck is repaired</code></td><td>Titled in business</td><td>A note, in a column that answers yes or no. It belongs beside the vehicle, and the register keeps it there.</td></tr>
+          <tr><td><code class="raw">000961 w/plowblade</code></td><td>Serial column</td><td>A serial number with a note added after it in the same cell.</td></tr>
+          <tr><td><code class="raw">cash I think?</code></td><td>Lien holder, twice</td><td>An uncertainty recorded in the data itself. It is kept as an uncertainty rather than read as a fact.</td></tr>
+          <tr><td><code class="raw">payment $1,593.82?</code></td><td>Lien holder</td><td>The fifth monthly payment, written with a question mark.</td></tr>
+          <tr><td><code class="raw">DOES NOT HAVE A VIN OR SERIAL #</code></td><td>Serial column</td><td>Not a defect — an answer, written in the only place available. It is exactly what <b>None, confirmed</b> now records properly.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ══════ 5 · ONE ITEM ══════ -->
+  <section id="s-item" class="msec">
+    <div class="sechead"><span class="secbadge">5</span><h2>One item in full</h2></div>
+    <p class="seclede">
+      Everything held against a single item: what it is, what is known and not known about it, the paperwork,
+      photographs, what is owed on it, and where it stands with the insurer.
+    </p>
+
+    <div class="dgrid">
+
+      <!-- truck -->
+      <div class="dpanel">
+        <div class="dhead">
+          <h3>2024 Dodge Ram 2500</h3>
+          <span class="chip chip-ok">Owned</span>
+          <div class="dsub">The least complete vehicle on the register — in service, on the road, with a live plate</div>
+        </div>
+        <div class="dbody">
+          <div class="dsec">
+            <h5>Identity</h5>
+            <div class="fgrid">
+              <div><div class="fk">Plate</div><div class="fv">WG7805</div></div>
+              <div><div class="fk">Registration to</div><div class="fv">31 October 2026</div><div class="fnote">87 days</div></div>
+              <div><div class="fk">VIN</div><div class="fv"><span class="unk">Unknown</span></div></div>
+              <div><div class="fk">Year</div><div class="fv">2024</div></div>
+              <div><div class="fk">Colour</div><div class="fv"><span class="unk">Unknown</span></div></div>
+              <div><div class="fk">Titled in business</div><div class="fv">Yes</div></div>
+            </div>
+          </div>
+          <div class="dsec">
+            <h5>Value and finance</h5>
+            <div class="fgrid">
+              <div><div class="fk">Our value</div><div class="fv"><span class="unk">Unknown</span></div><div class="fnote">The only item on the register with no value.</div></div>
+              <div><div class="fk">Lender</div><div class="fv"><span class="unk">Unknown</span></div></div>
+              <div><div class="fk">Monthly payment</div><div class="fv"><span class="unk">Unknown</span></div></div>
+            </div>
+          </div>
+          <div class="dsec">
+            <h5>Insurance</h5>
+            <div class="fgrid">
+              <div><div class="fk">On the last schedule</div><div class="fv">Yes — sent 28 July</div></div>
+              <div><div class="fk">Confirmed by insurer</div><div class="fv"><span class="unk">Awaiting</span></div></div>
+              <div><div class="fk">Insured for</div><div class="fv"><span class="unk">Awaiting</span></div></div>
+            </div>
+          </div>
+          <div class="dsec">
+            <h5>Paperwork</h5>
+            <div class="dlist">
+              <div class="drow"><svg><use href="#i-doc"/></svg><span class="dn">Registration card</span><span class="dd">added 12 March 2026</span></div>
+              <div class="drow miss"><svg><use href="#i-doc"/></svg><span class="dn">Title</span><span class="dd">not held</span></div>
+              <div class="drow miss"><svg><use href="#i-doc"/></svg><span class="dn">Purchase paperwork</span><span class="dd">not held</span></div>
+              <div class="drow miss"><svg><use href="#i-doc"/></svg><span class="dn">Insurance certificate</span><span class="dd">not held</span></div>
+            </div>
+            <p class="fnote" style="margin-top:7px">Paperwork kept here can be opened from anywhere, rather than being wherever the original happens to be. Some purchases have gone through electronically with nothing kept at all.</p>
+          </div>
+          <div class="dsec">
+            <h5>Photographs</h5>
+            <div class="pstrip">
+              <div class="pshot" data-cap="2024 Dodge Ram 2500 — front three-quarter"><svg><use href="#i-cam"/></svg></div>
+              <div class="pshot" data-cap="2024 Dodge Ram 2500 — plate WG7805"><svg><use href="#i-cam"/></svg></div>
+              <div class="padd">Add</div>
+            </div>
+          </div>
+          <div class="dsec">
+            <h5>Outstanding</h5>
+            <div class="dlist">
+              <div class="drow"><svg><use href="#i-clock"/></svg><span class="dn">Registration renews in 87 days</span><span class="dd">will appear in Needs attention at 60</span></div>
+              <div class="drow miss"><svg><use href="#i-q"/></svg><span class="dn">Value and lender both unknown</span><span class="dd">nobody assigned</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- curb machine -->
+      <div class="dpanel">
+        <div class="dhead">
+          <h3>Curb machine and attached trailer</h3>
+          <span class="chip chip-ok">Owned</span>
+          <div class="dsub">Nothing outstanding — including the thing that will never be answerable</div>
+        </div>
+        <div class="dbody">
+          <div class="dsec">
+            <h5>Identity</h5>
+            <div class="fgrid">
+              <div style="grid-column:1 / -1">
+                <div class="fk">Serial</div>
+                <div class="fv none-c"><b>None, confirmed</b></div>
+                <div class="fnote">No serial was ever stamped on this machine.<br>Settled by Jen Wuebben on 4 August 2026.</div>
+              </div>
+              <div><div class="fk">Plate</div><div class="fv none-c"><b>None, confirmed</b></div><div class="fnote">Not a road vehicle.</div></div>
+              <div><div class="fk">Registration</div><div class="fv none-c"><b>Does not apply</b></div><div class="fnote">Not a road vehicle.</div></div>
+              <div><div class="fk">Year</div><div class="fv"><span class="unk">Unknown</span></div><div class="fnote">Not a road vehicle, so nothing is being asked.</div></div>
+            </div>
+          </div>
+          <div class="dsec">
+            <h5>Why this matters</h5>
+            <p class="fnote" style="font-size:12.5px;color:var(--ink-soft);line-height:1.55">
+              On the spreadsheet, this item's serial cell reads <code class="raw">DOES NOT HAVE A VIN OR SERIAL #</code>.
+              That is the right answer written in the only place there was to write it. Recorded properly, it
+              stops being a permanent blank that looks like neglect: it never appears as outstanding, and the
+              question does not come round again — but anyone who wonders can still see who established it and when.
+            </p>
+          </div>
+          <div class="dsec">
+            <h5>Photographs</h5>
+            <div class="pstrip">
+              <div class="pshot" data-cap="Curb machine — on the trailer"><svg><use href="#i-cam"/></svg></div>
+              <div class="padd">Add</div>
+            </div>
+            <p class="fnote" style="margin-top:7px">A photograph does the work a serial number cannot for items that never carried one — and it is how the two identical plows and the two identical salters are told apart, once each has a paint mark or a tag.</p>
+          </div>
+          <div class="dsec">
+            <h5>Outstanding</h5>
+            <div class="dlist">
+              <div class="drow"><svg><use href="#i-check"/></svg><span class="dn">Nothing outstanding</span><span class="dd">nothing here creates work</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="foot">
+    Mockup for review. Figures computed against 5 August 2026 from the equipment spreadsheet as it stood on
+    4 August 2026 and from the July 2026 insurance correspondence. Nothing on this page saves anything, and no
+    task is created.
+  </div>
+
+</div><!-- /wrap -->
+</div><!-- /page -->
+
+<!-- lightbox -->
+<div class="lb" id="lb" hidden>
+  <div class="lb-in">
+    <div class="lb-img"><svg><use href="#i-cam"/></svg></div>
+    <div class="lb-bar">
+      <div class="lbt" id="lb-cap">Photograph</div>
+      <button class="btn btn-ghost btn-sm" id="lb-x"><svg><use href="#i-close"/></svg>Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var body = document.body;
+
+  // ── section tabs (mockup chrome) ──────────────────────────────────────
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".mock-tab"));
+  var secs = Array.prototype.slice.call(document.querySelectorAll(".msec"));
+  tabs.forEach(function (t) {
+    t.addEventListener("click", function () {
+      tabs.forEach(function (x) { x.classList.remove("is-on"); });
+      t.classList.add("is-on");
+      var want = t.getAttribute("data-sec");
+      secs.forEach(function (s) { s.hidden = (want !== "all" && s.id !== want); });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+
+  // ── task-creation gate ────────────────────────────────────────────────
+  var gateOn = false;
+  var gateBtn = document.getElementById("v-gate");
+  var gateCopy = document.getElementById("gate-copy");
+  var offCopy = gateCopy.innerHTML;
+  var onCopy = "<b>Task creation is switched on.</b> <b>5&nbsp;tasks</b> are open in GoHighLevel covering 7 of the "
+    + "9 entries below. The remaining 2 have nobody assigned to them, so no task has been created for those.";
+  gateBtn.addEventListener("click", function () {
+    gateOn = !gateOn;
+    gateBtn.textContent = "Task creation: " + (gateOn ? "on" : "off");
+    gateBtn.classList.toggle("is-on", !gateOn);
+    gateCopy.innerHTML = gateOn ? onCopy : offCopy;
+    Array.prototype.forEach.call(document.querySelectorAll(".gate-off"), function (n) { n.hidden = gateOn; });
+    Array.prototype.forEach.call(document.querySelectorAll(".gate-on"), function (n) { n.hidden = !gateOn; });
+  });
+
+  // ── mobile view ───────────────────────────────────────────────────────
+  var mobBtn = document.getElementById("v-mob");
+  mobBtn.addEventListener("click", function () {
+    body.classList.toggle("mobile");
+    mobBtn.classList.toggle("is-on", body.classList.contains("mobile"));
+    mobBtn.textContent = body.classList.contains("mobile") ? "Desktop" : "Mobile";
+  });
+
+  // ── register filter ───────────────────────────────────────────────────
+  var fchips = Array.prototype.slice.call(document.querySelectorAll(".fchip"));
+  var groups = {
+    owned:  document.getElementById("reg-owned"),
+    leased: document.getElementById("reg-leased"),
+    rented: document.getElementById("reg-rented"),
+    sold:   document.getElementById("reg-sold"),
+    off:    document.getElementById("reg-off")
+  };
+  var more = document.getElementById("reg-more");
+  fchips.forEach(function (c) {
+    c.addEventListener("click", function () {
+      fchips.forEach(function (x) { x.classList.remove("is-on"); });
+      c.classList.add("is-on");
+      var f = c.getAttribute("data-f");
+      Object.keys(groups).forEach(function (k) {
+        var isEmptyState = (k === "rented" || k === "sold" || k === "off");
+        if (f === "all") { groups[k].hidden = isEmptyState; }
+        else { groups[k].hidden = (k !== f); }
+      });
+      more.hidden = !(f === "all" || f === "owned");
+    });
+  });
+
+  // ── schedule preview ──────────────────────────────────────────────────
+  var pbtn = document.getElementById("b-print");
+  var pwrap = document.getElementById("schedwrap");
+  pbtn.addEventListener("click", function () {
+    pwrap.hidden = !pwrap.hidden;
+    pbtn.lastChild.nodeValue = pwrap.hidden ? "Preview the schedule" : "Hide the preview";
+  });
+
+  // ── photo lightbox ────────────────────────────────────────────────────
+  var lb = document.getElementById("lb");
+  var lbCap = document.getElementById("lb-cap");
+  Array.prototype.forEach.call(document.querySelectorAll(".pshot"), function (p) {
+    p.addEventListener("click", function () {
+      lbCap.textContent = p.getAttribute("data-cap") || "Photograph";
+      lb.hidden = false;
+    });
+  });
+  document.getElementById("lb-x").addEventListener("click", function () { lb.hidden = true; });
+  lb.addEventListener("click", function (e) { if (e.target === lb) { lb.hidden = true; } });
+})();
+</script>
+</body>
+</html>
