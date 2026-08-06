@@ -1,0 +1,1427 @@
+<!doctype html>
+<!-- docs/mockups/contracts.html — LD-51 contract registry: the /contracts page mockup.
+     Static, for approval; iterated in chat until blessed (Phase M); gates the build.
+     Authority: docs/slices/contract-registry-2-design-gate.md (R4 the surface ruling,
+     4.2 the review-and-send overlay). Fixture source: docs/slices/contract-registry-1-audit.md
+     (3.1 the 19-account extract, 7 the billing conventions, 9.4 the live Yeti rates).
+     Visual donor: src/shared/panekit.js (tokens, controls) and src/projects/page.js
+     (the process-ordered section, card and sheet anatomy).
+     The dark top bar and the caption strip are mockup chrome, not proposed interface.
+     Today, throughout, is Thursday 15 October 2026. Aug 2026. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Contracts &mdash; mockup</title>
+<style>
+  /* ── Design tokens (donor: src/shared/panekit.js) ───────────────────── */
+  :root{
+    --bg:#f1f4f1; --ink:#1d2b1f; --ink-soft:#3a4a3c; --mute:#5a6b5c;
+    --surface:#ffffff; --line:#dbe4dc; --line-soft:#eef2ee; --wash:#f6f8f6;
+    --green-deep:#234b34; --green:#3a7d44; --green-brt:#45934f; --green-wash:#e3f2e5;
+    --amber:#b45309; --amber-wash:#fdeeda; --amber-ink:#8a4b06;
+    --danger:#7f1d1d; --danger-wash:#fdecea;
+    --blue:#1e40af; --blue-wash:#e5eefb;
+    --lilac:#3c4b66; --lilac-wash:#e6eaf2;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  [hidden]{display:none !important}
+  body{font-family:var(--font);background:var(--bg);color:var(--ink);line-height:1.45;
+    -webkit-font-smoothing:antialiased;padding-bottom:70px}
+
+  /* ── Mockup chrome (NOT part of the proposed interface) ─────────────── */
+  .mock-top{position:sticky;top:0;z-index:50;background:#101812;color:#e8efe9;
+    padding:11px 16px 12px;box-shadow:0 6px 24px rgba(0,0,0,.28)}
+  .mock-brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:14px;font-weight:750}
+  .mock-brand span{font-size:11.5px;font-weight:500;color:#9fb3a5}
+  .mock-rows{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px;align-items:center}
+  .mock-tab,.mock-view button{font:inherit;font-size:12px;font-weight:650;color:#cfe0d4;
+    background:#1d2a20;border:1px solid #2c3d31;border-radius:999px;padding:6px 12px;cursor:pointer}
+  .mock-tab.is-on,.mock-view button.is-on{background:#46a05f;border-color:#46a05f;color:#0c130e}
+  .mock-view{margin-left:auto;display:flex;gap:6px}
+  .mock-cap{max-width:1040px;margin:14px auto 0;padding:10px 16px;font-size:13px;color:#3c4a41;
+    background:#e6ebe5;border:1px solid #d5ddd4;border-radius:10px;line-height:1.5}
+  .mock-note{max-width:1040px;margin:6px auto 0;padding:0 16px;font-size:11.5px;color:#8a978d;line-height:1.5}
+  .mstate{display:none}
+  .mstate.is-on{display:block}
+
+  /* ── The page shell ─────────────────────────────────────────────────── */
+  .frame{max-width:1040px;margin:0 auto;padding:22px 16px 0}
+  body.phone .frame{max-width:402px}
+  .navbar{background:var(--green-deep);color:#dbeade;border-radius:10px;padding:9px 14px;
+    font-size:12.5px;font-weight:600;display:flex;gap:16px;flex-wrap:wrap;margin:0 0 16px}
+  .navbar span{opacity:.62}
+  .navbar span.on{opacity:1;color:#fff;text-decoration:underline;text-underline-offset:4px}
+  .pagehead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:0 0 10px}
+  .pagehead h1{margin:0;font-size:21px;color:var(--ink)}
+  .pagehead .when{font-size:12.5px;color:var(--mute)}
+
+  .lede{font-size:13px;color:var(--ink-soft);margin:0 0 4px;line-height:1.55}
+  .lede strong{color:var(--ink)}
+  .ledesub{font-size:12.5px;color:var(--mute);margin:0 0 14px;line-height:1.55}
+
+  /* the chevron strip (donor: /projects .strip/.seg) */
+  .strip{display:flex;align-items:stretch;gap:0;margin:0 0 6px;flex-wrap:wrap}
+  .seg{position:relative;background:#fff;border:1px solid var(--line);border-right:none;
+    padding:10px 14px 10px 22px;cursor:pointer;flex:1 1 auto;min-width:150px;display:flex;
+    flex-direction:column;justify-content:center;font:inherit;text-align:left}
+  .seg:first-child{border-radius:10px 0 0 10px;padding-left:14px}
+  .seg:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}
+  .seg::after{content:"";position:absolute;right:-9px;top:50%;width:16px;height:16px;
+    transform:translateY(-50%) rotate(45deg);background:inherit;border-top:1px solid var(--line);
+    border-right:1px solid var(--line);z-index:2}
+  .seg:last-child::after{display:none}
+  .seg .n{font-size:18px;font-weight:800;color:var(--ink)}
+  .seg .t{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--mute)}
+  .seg .sub{font-size:11.5px;color:var(--mute);margin-top:2px}
+  .seg:hover{background:var(--wash)}
+  .seg.action .n{color:#1e6b3a}
+  .seg.ref{background:var(--wash)}
+  .seg.ref::after{background:var(--wash)}
+  .seg.ref .n{color:var(--mute)}
+
+  .worklists{display:flex;gap:8px;margin:8px 0 20px;flex-wrap:wrap}
+  .wl{background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 12px;
+    font:inherit;font-size:12px;font-weight:600;color:var(--ink-soft);cursor:pointer}
+  .wl:hover{background:var(--wash)}
+  .wl .b{display:inline-block;min-width:18px;text-align:center;background:var(--danger);color:#fff;
+    border-radius:999px;font-size:11px;font-weight:800;padding:1px 6px;margin-left:6px}
+  .wl .b.quiet{background:var(--mute)}
+
+  /* section heads (donor: /projects .stephead) */
+  .stephead{display:flex;align-items:baseline;gap:10px;margin:26px 0 8px;flex-wrap:wrap}
+  .stepnum{font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#fff;
+    background:var(--green-deep);border-radius:6px;padding:3px 8px;white-space:nowrap}
+  .stepnum.ref{background:var(--mute)}
+  .stephead h2{margin:0;font-size:16px;color:var(--ink)}
+  .steplede{font-size:12.5px;color:var(--mute);margin:0 0 10px;line-height:1.55;max-width:82ch}
+
+  details.howto{background:#fff;border:1px solid var(--line);border-radius:10px;margin:0 0 14px;
+    box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  details.howto>summary{cursor:pointer;padding:11px 15px;font-size:13px;font-weight:700;color:var(--green-deep)}
+  .howto-body{padding:2px 15px 14px;max-width:88ch}
+  .howto-body p{font-size:13px;color:var(--ink-soft);margin:0 0 9px;line-height:1.55}
+  .howto-body p:last-child{margin-bottom:0}
+  .howto-body b{color:var(--ink)}
+
+  /* buttons + links */
+  .btn{font:inherit;font-size:13.5px;font-weight:600;padding:8px 14px;border-radius:7px;
+    border:1px solid transparent;cursor:pointer;transition:background .15s}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-green:hover{background:var(--green-brt)}
+  .btn-amber{background:var(--amber);color:#fff}
+  .btn-amber:hover{background:#c96712}
+  .btn-ghost{background:#fff;color:#2c4a34;border-color:#c9d4ca}
+  .btn-ghost:hover{background:var(--line-soft)}
+  .btn-sm{padding:6px 11px;font-size:12.5px}
+  .lnk{font-size:12.5px;font-weight:600;color:#2c4a34;text-decoration:none;border-bottom:1px solid #bfd2c4}
+  .lnk:hover{border-bottom-color:#2c4a34}
+
+  /* chips */
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+    letter-spacing:.3px;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .chip-active{background:var(--green-wash);color:#256a30}
+  .chip-signed{background:var(--blue-wash);color:var(--blue)}
+  .chip-draft{background:#eceeec;color:#4a564b}
+  .chip-sent{background:var(--amber-wash);color:var(--amber-ink)}
+  .chip-expired{background:var(--danger-wash);color:var(--danger)}
+  .chip-replaced{background:var(--lilac-wash);color:var(--lilac)}
+  .chip-cancelled{background:#e6e6e6;color:#5b625c}
+  .chip-warn{background:var(--amber-wash);color:var(--amber-ink)}
+  .chip-stop{background:var(--danger-wash);color:var(--danger)}
+  .chip-quiet{background:var(--line-soft);color:var(--mute)}
+  .chip-info{background:var(--blue-wash);color:var(--blue)}
+
+  /* the help trigger, hover-only in the mockup */
+  .hbtn{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
+    border-radius:999px;border:1px solid #bfd2c4;background:#fff;color:#2c4a34;font-size:10px;
+    font-weight:800;cursor:help;position:relative;vertical-align:middle;margin-left:5px}
+  .chip .hbtn{width:14px;height:14px;font-size:9px;margin:-2px -2px -2px 4px}
+  .wl .hbtn{margin-left:7px}
+  .hbtn:hover::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 7px);
+    transform:translateX(-50%);width:260px;background:#1d2b1f;color:#e8efe9;font-size:11.5px;
+    font-weight:500;line-height:1.5;padding:8px 10px;border-radius:8px;z-index:40;
+    box-shadow:0 8px 22px rgba(0,0,0,.28);white-space:normal;text-align:left}
+
+  /* due rows */
+  .drow{background:#fff;border:1px solid var(--line);border-left:4px solid #9aa89c;border-radius:10px;
+    padding:13px 15px;margin:0 0 10px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .drow.is-ready{border-left-color:#57a06e}
+  .drow.is-late{border-left-color:var(--amber)}
+  .drow.is-stop{border-left-color:var(--danger)}
+  .drow.is-quiet{border-left-color:#c9d4ca;background:#fafbfa;box-shadow:none}
+  .drhead{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .drname{font-size:15px;font-weight:700;color:var(--ink)}
+  .grow{flex:1 1 auto}
+  .dramt{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .dramt.none{font-size:13px;font-weight:600;color:var(--mute)}
+  .drmeta{font-size:12.5px;color:var(--mute);margin:5px 0 0}
+  .drmeta .sep{color:#a9b5ab;margin:0 6px}
+  .drnote{font-size:12.5px;color:var(--ink-soft);background:var(--wash);border-radius:8px;
+    padding:8px 11px;margin:9px 0 0;line-height:1.5}
+  .drnote.warn{background:var(--amber-wash);color:#7a4508}
+  .drnote.stop{background:var(--danger-wash);color:var(--danger)}
+  .dract{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:11px 0 0}
+  .drsub{font-size:12px;color:var(--mute);margin:6px 0 0}
+
+  .sechead{display:flex;align-items:baseline;gap:8px;margin:16px 0 8px}
+  .sechead h3{margin:0;font-size:13px;font-weight:700;color:var(--ink)}
+  .sechead .c{font-size:12px;color:var(--mute)}
+
+  /* browse table */
+  .card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 2px rgba(0,0,0,.06);margin:0 0 14px}
+  .ctlrow{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+  .ctl{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--ink-soft)}
+  .ctl-lab{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--mute)}
+  .ctl select,.ctl input[type=text]{font:inherit;font-size:14px;padding:7px 9px;border:1px solid #c9d4ca;
+    border-radius:7px;background:#fff;min-width:170px}
+  .tscroll{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff}
+  table.reg{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;min-width:820px}
+  table.reg th,table.reg td{text-align:left;padding:8px 11px;border-bottom:1px solid #e2e8e2;vertical-align:top}
+  table.reg th{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.4px;
+    background:var(--line-soft);position:sticky;top:0;z-index:1}
+  table.reg tr.grp td{background:#eef3ee;font-weight:700;color:var(--ink);font-size:13px}
+  table.reg tr.grp td .cnt{font-weight:500;color:var(--mute);font-size:12px;margin-left:6px}
+  table.reg tr.conf td{background:var(--danger-wash);color:var(--danger);font-size:12.5px}
+  table.reg td.money{font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.reg td.nm{font-weight:600;color:var(--ink)}
+  table.reg tbody tr.row:hover td{background:#f4f8f4}
+  .subnote{font-size:11.5px;color:var(--mute);display:block;margin-top:2px}
+
+  /* facts + blocks (detail) */
+  .entcard{background:#fff;border-radius:10px;padding:16px 18px;margin:0 0 12px;
+    box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .enthead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:0 0 4px}
+  .cust{font-size:19px;font-weight:700;line-height:1.2}
+  .crumb{font-size:12px;color:var(--mute);margin:0 0 8px}
+  .crumb a{color:#2c4a34;text-decoration:none;border-bottom:1px solid #bfd2c4}
+  .chiprow{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 0}
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 18px;margin:14px 0 0}
+  .fact{display:flex;flex-direction:column;gap:2px;font-size:13px}
+  .fact-k{color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.4px;font-weight:700}
+  .fact-v{color:var(--ink);word-break:break-word}
+  .blockcard{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 15px;margin:0 0 10px}
+  .blockcard h4{margin:0 0 9px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--mute)}
+  .frow{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--line-soft);font-size:13px}
+  .blockcard .frow:first-of-type{border-top:none}
+  .fk{flex:0 0 190px;color:var(--mute);font-size:12.5px}
+  .fv{flex:1 1 auto;color:var(--ink)}
+  .prov{font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:2px 7px;
+    border-radius:999px;background:var(--line-soft);color:var(--mute);white-space:nowrap}
+  .prov.sheet{background:var(--amber-wash);color:var(--amber-ink)}
+  .prov.doc{background:var(--blue-wash);color:var(--blue)}
+  .prov.office{background:var(--green-wash);color:#256a30}
+  .quietbox{background:var(--wash);border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    font-size:12.5px;color:var(--ink-soft);margin:0 0 12px;line-height:1.55}
+  .quietbox.warn{background:var(--amber-wash);border-color:#f0d9b6;color:#7a4508}
+  .quietbox.info{background:var(--blue-wash);border-color:#cfdcf5;color:#22326b}
+  .hist{font-size:12.5px;color:var(--ink-soft)}
+  .hist div{padding:6px 0;border-top:1px solid var(--line-soft)}
+  .hist div:first-child{border-top:none}
+  .hist .d{color:var(--mute);margin-right:8px}
+  .actions{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 0}
+
+  /* the overlay */
+  .scrim{background:rgba(22,33,27,.45);border-radius:12px;padding:22px 14px;margin:0 0 18px}
+  .sheet{width:min(760px,100%);margin:0 auto;background:#fff;border-radius:14px;padding:18px;
+    box-shadow:0 24px 60px rgba(22,33,27,.35)}
+  .sheet-title{font-size:17px;font-weight:750;margin:0;color:var(--ink)}
+  .sheet-lede{font-size:12.5px;color:var(--mute);margin:6px 0 0;line-height:1.55}
+  .steps{display:flex;gap:6px;margin:14px 0 16px;flex-wrap:wrap}
+  .stp{flex:1 1 auto;min-width:150px;border:1px solid var(--line);border-radius:8px;padding:8px 11px;
+    font-size:12px;color:var(--mute);background:var(--wash)}
+  .stp b{display:block;font-size:12.5px;color:var(--ink-soft)}
+  .stp.on{background:var(--green-deep);border-color:var(--green-deep);color:#cfe6d6}
+  .stp.on b{color:#fff}
+  .stp.done{background:var(--green-wash);border-color:#bcdcc4;color:#2c6b3a}
+  .stp.done b{color:#1e5b31}
+  .lntbl{border:1px solid var(--line);border-radius:10px;overflow:hidden;margin:0 0 12px}
+  .lnhd{display:flex;background:var(--line-soft);padding:7px 12px;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.4px;color:var(--mute)}
+  .lnhd .a{margin-left:auto}
+  .ln{border-top:1px solid var(--line-soft);padding:11px 12px}
+  .ln:first-of-type{border-top:none}
+  .ln.extra{background:#fbfaf5}
+  .ln.blocked{background:var(--danger-wash)}
+  .ln.pending{background:var(--amber-wash)}
+  .lnmain{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+  .lnname{font-size:13.5px;font-weight:650;color:var(--ink)}
+  .lnamt{margin-left:auto;font-size:14px;font-weight:750;font-variant-numeric:tabular-nums}
+  .lnamt.todo{font-size:12.5px;font-weight:700;color:var(--amber-ink)}
+  .lndesc{font-size:12.5px;color:var(--mute);margin:3px 0 0}
+  .ev{margin:8px 0 0;border-left:2px solid #cfdccf;padding-left:11px}
+  .evr{display:flex;gap:9px;font-size:12px;color:var(--ink-soft);padding:2px 0;flex-wrap:wrap}
+  .evr .d{color:var(--mute);flex:0 0 78px}
+  .evr .s{flex:1 1 auto;min-width:120px}
+  .evr .st{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
+    padding:1px 7px;border-radius:999px;background:var(--green-wash);color:#256a30}
+  .evr .st.no{background:var(--amber-wash);color:var(--amber-ink)}
+  .evr .st.dup{background:var(--danger-wash);color:var(--danger)}
+  .lnact{display:flex;gap:10px;margin:9px 0 0;flex-wrap:wrap}
+  .tot{display:flex;align-items:baseline;padding:11px 12px;border-top:2px solid var(--line);
+    background:var(--wash);font-size:13px}
+  .tot .l{color:var(--mute);font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.4px}
+  .tot .v{margin-left:auto;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+  .sheet-actions{display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap;margin:16px 0 0}
+  .conseq{font-size:13px;color:var(--danger);background:var(--danger-wash);border-radius:8px;
+    padding:10px 12px;margin:12px 0 0;line-height:1.5}
+  .reqlist{border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:12px 0 0}
+  .reqr{display:flex;gap:10px;padding:9px 12px;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--ink-soft)}
+  .reqr:first-child{border-top:none}
+  .reqr .mk{flex:0 0 18px;font-weight:800}
+  .reqr.ok .mk{color:#2c6b3a}
+  .reqr.att .mk{color:var(--amber-ink)}
+  .recip{border:1px solid var(--line);border-radius:9px;overflow:hidden;margin:10px 0 0}
+  .rcr{display:flex;gap:10px;align-items:baseline;padding:9px 12px;border-top:1px solid var(--line-soft);font-size:12.5px}
+  .rcr:first-child{border-top:none}
+  .rcr .who{font-weight:650;color:var(--ink);flex:0 0 auto}
+  .rcr .adr{color:var(--mute)}
+  .rcr .rm{margin-left:auto}
+  .qbcard{border:1px solid #cfdcf5;background:#f7faff;border-radius:10px;padding:12px 14px;margin:0 0 12px}
+  .qbcard .facts{margin-top:8px}
+
+  /* editable lines on the read-back, and the collision comparison */
+  .eln{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line-soft)}
+  .blockcard .eln:first-of-type{border-top:none}
+  .eln .ctl input{min-width:0}
+  .eln .rm{padding-bottom:9px}
+  .diff{width:100%;border-collapse:separate;border-spacing:0;font-size:12.5px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .diff th{background:var(--line-soft);color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.4px;text-align:left;padding:7px 11px}
+  .diff td{padding:8px 11px;border-top:1px solid var(--line-soft);vertical-align:top}
+  .diff td.was{color:var(--mute)}
+  .diff td.now{background:var(--amber-wash);color:#7a4508;font-weight:650}
+  .diff td.money{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  .alertbar{background:var(--amber);color:#fff;border-radius:10px;padding:12px 14px;font-size:13px;
+    line-height:1.55;margin:14px 0 0}
+  .alertbar b{display:block;font-size:13.5px;margin-bottom:3px}
+
+  /* compare block (view-only state) */
+  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 20px}
+  .cmp>div{min-width:0}
+  .cmplab{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--mute);margin:0 0 7px}
+  body.phone .cmp{grid-template-columns:1fr}
+
+  /* phone */
+  body.phone .strip{flex-direction:column}
+  body.phone .seg{border-right:1px solid var(--line);border-bottom:none;min-width:0}
+  body.phone .seg:first-child{border-radius:10px 10px 0 0;padding-left:14px}
+  body.phone .seg:last-child{border-radius:0 0 10px 10px;border-bottom:1px solid var(--line)}
+  body.phone .seg::after{display:none}
+  body.phone .seg{border-bottom:1px solid var(--line)}
+  body.phone .fk{flex:0 0 130px}
+  body.phone .dramt{margin-left:0}
+  body.phone .sheet{padding:14px}
+  body.phone .scrim{padding:12px 8px}
+</style>
+</head>
+<body>
+
+<div class="mock-top">
+  <div class="mock-brand">Contracts &mdash; mockup <span>LD-51 &middot; /contracts &middot; fixtures from the office contract spreadsheet, July 2026 &middot; today is Thursday 15 October 2026</span></div>
+  <div class="mock-rows">
+    <button class="mock-tab is-on" data-s="s1">1 &middot; Due to invoice</button>
+    <button class="mock-tab" data-s="s2">2 &middot; Renewals</button>
+    <button class="mock-tab" data-s="s3">3 &middot; All contracts</button>
+    <button class="mock-tab" data-s="s4">4 &middot; Contract detail</button>
+    <button class="mock-tab" data-s="s5">5 &middot; Review &middot; the draft</button>
+    <button class="mock-tab" data-s="s6">6 &middot; Review &middot; create and send</button>
+    <button class="mock-tab" data-s="s7">7 &middot; View only</button>
+    <button class="mock-tab" data-s="s8">8 &middot; Client panel</button>
+    <div class="mock-view"><button id="vw-desk" class="is-on">Desktop</button><button id="vw-phone">Phone</button></div>
+  </div>
+</div>
+<div class="mock-cap" id="cap"></div>
+<p class="mock-note">The dark bar and this caption strip are mockup chrome, not proposed interface. Every account, amount and billing convention is drawn from the office contract spreadsheet as transcribed in the audit; contact email addresses on the send step are illustrative. Hover a small circled question mark to read its help text.</p>
+
+<!-- ══════════════════ STATE 1 — DUE TO INVOICE ══════════════════ -->
+<section class="mstate is-on" id="s1" data-cap="State 1 — the top of the page and the first section. The page lede, the stage strip and the two worklist pills, then Due to invoice with all seven row states: ready to draft, lapsed paper still owed an invoice, a period with extras, nothing to bill, terms not sufficient to work out an amount, visits recorded at a location that is not linked to the contract, and a visit held back because a project is running at the same site and it has not been matched to either.">
+<div class="frame">
+
+  <div class="navbar"><span>Dashboard</span><span>Pipeline</span><span>Projects</span><span class="on">Contracts</span><span>Timeclock</span><span>Watch</span><span>Data</span></div>
+
+  <div class="pagehead">
+    <h1>Contracts</h1>
+    <span class="when">Thursday 15 October 2026</span>
+  </div>
+
+  <p class="lede">Every recurring agreement A-Plus holds is recorded here, and the page follows the work in the order it happens: <strong>invoices that are due are drafted first, contracts that have lapsed or are ending soon are renewed next, and the full register sits below both.</strong></p>
+  <p class="ledesub">Each step is carried out by a person. The system assembles a draft and shows the work behind every line, but nothing is created in QuickBooks and nothing is sent to a customer until someone has reviewed it and chosen to go ahead. The strip below shows where things currently stand; selecting a segment moves to that part of the page.</p>
+
+  <div class="strip">
+    <button class="seg action" type="button"><span class="n">10</span><span class="t">Due to invoice</span><span class="sub">$18,985.13 assembled</span></button>
+    <button class="seg" type="button"><span class="n">4</span><span class="t">Renewals</span><span class="sub">2 lapsed, 2 ending soon</span></button>
+    <button class="seg ref" type="button"><span class="n">27</span><span class="t">All contracts</span><span class="sub">across 19 accounts</span></button>
+  </div>
+  <div class="worklists">
+    <button class="wl" type="button">Needs attention <span class="b">6</span><span class="hbtn" data-tip="Contracts that cannot be drafted as they stand, or whose terms disagree: three carry no charge on file, one has visits recorded at a location that is not linked to it, one has a visit that has not been matched to either the contract or a project at the same site, and one has two contracts describing the same terms.">?</span></button>
+    <button class="wl" type="button">Figures to confirm <span class="b quiet">8</span><span class="hbtn" data-tip="Contracts carrying a figure taken from the office contract spreadsheet that has not yet been checked against a signed document. They are still used to assemble invoices, and the review screen says so before anything is created.">?</span></button>
+  </div>
+
+  <div class="stephead">
+    <span class="stepnum">Step 1</span>
+    <h2>Due to invoice</h2>
+  </div>
+  <p class="steplede">Recurring invoices whose period has closed, oldest first. Each entry shows the amount assembled from the contract&rsquo;s terms and the work recorded against it. Selecting <strong>Review and send</strong> opens the draft, where every line can be checked against the visits that produced it before anything is created in QuickBooks.</p>
+  <details class="howto">
+    <summary>More about this step</summary>
+    <div class="howto-body">
+      <p><b>How an amount is worked out.</b> A contract billed at a flat monthly rate produces a single line for the period. A contract billed for each service produces one line for each approved visit, priced from the rate recorded on the contract. Anything found in the period that the contract does not cover appears separately as an extra, with the visit that produced it beside it.</p>
+      <p><b>Only approved work is billed.</b> A visit that has not yet been approved appears on the draft but is not included in the amount. Two visits recorded as an overlapping pair are held back until someone confirms which of them is real.</p>
+      <p><b>Contracts whose paperwork has lapsed still appear here.</b> An account that is still being serviced is still owed an invoice, so a lapsed contract is drafted as usual and marked, rather than quietly left out of the run.</p>
+      <p><b>Nothing to bill and terms not sufficient are different things.</b> The first means the period genuinely produced no billable work. The second means the contract does not yet carry enough information for an amount to be worked out, and the missing terms need to be added to the contract before it can be drafted.</p>
+      <p><b>Amounts are worked out from the contract, never estimated.</b> Where a figure came from the office contract spreadsheet rather than a signed document it is marked as unconfirmed, and the review screen repeats that before anything is created.</p>
+    </div>
+  </details>
+
+  <div class="drow is-late">
+    <div class="drhead">
+      <span class="drname">Liberty Square &mdash; Grounds</span>
+      <span class="chip chip-active">Active</span>
+      <span class="chip chip-quiet">Tax exempt</span>
+      <span class="grow"></span>
+      <span class="dramt">$1,630.00</span>
+    </div>
+    <div class="drmeta">September 2026<span class="sep">&middot;</span>Billed for each service<span class="sep">&middot;</span>Due 30 September 2026, 15 days ago</div>
+    <div class="drnote">Four mowing visits at $260.00 each, and one fertiliser application by the sub-contractor at $590.00, which is charged on as it is carried out.</div>
+    <div class="dract">
+      <button class="btn btn-green btn-sm" type="button">Review and send</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+  </div>
+
+  <div class="drow is-late">
+    <div class="drhead">
+      <span class="drname">Heritage Homes &mdash; Snow</span>
+      <span class="chip chip-expired">Paper expired</span>
+      <span class="grow"></span>
+      <span class="dramt">$6,280.00</span>
+    </div>
+    <div class="drmeta">November 2026<span class="sep">&middot;</span>Flat monthly<span class="sep">&middot;</span>Due 1 October 2026, 14 days ago</div>
+    <div class="drnote warn">This contract ended on 1 March 2026 and has not been renewed, but Heritage Homes is still being serviced, so the invoice is still owed. Renewing the contract is the second section of this page.</div>
+    <div class="dract">
+      <button class="btn btn-green btn-sm" type="button">Review and send</button>
+      <a class="lnk" href="#">Open contract</a>
+      <a class="lnk" href="#">Renew this contract</a>
+    </div>
+  </div>
+
+  <div class="drow is-late">
+    <div class="drhead">
+      <span class="drname">Amrize &mdash; Grounds</span>
+      <span class="chip chip-active">Active</span>
+      <span class="chip chip-warn">Unconfirmed figures<span class="hbtn" data-tip="The monthly charge on this contract came from the office contract spreadsheet rather than a signed document. It is used as it stands, and the review screen repeats this before anything is created.">?</span></span>
+      <span class="chip chip-info">Purchase order required</span>
+      <span class="grow"></span>
+      <span class="dramt">$6,056.43</span>
+    </div>
+    <div class="drmeta">1 &ndash; 30 September 2026<span class="sep">&middot;</span>Flat monthly, billed for the month just ended<span class="sep">&middot;</span>Due 1 October 2026, 14 days ago</div>
+    <div class="drnote warn">One line still needs a price: six hand-weeding hours were recorded on 3 September and this contract carries no rate for that work. The amount above does not include it.</div>
+    <div class="dract">
+      <button class="btn btn-green btn-sm" type="button">Review and send</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+    <p class="drsub">Two visits recorded on 16 September overlap and are held back from this draft.</p>
+  </div>
+
+  <div class="drow is-stop">
+    <div class="drhead">
+      <span class="drname">Kwik Trip &mdash; Grounds</span>
+      <span class="chip chip-active">Active</span>
+      <span class="chip chip-stop">Location not linked</span>
+      <span class="chip chip-quiet">Billed through ServiceChannel</span>
+      <span class="grow"></span>
+      <span class="dramt">$555.00</span>
+    </div>
+    <div class="drmeta">1 &ndash; 30 September 2026<span class="sep">&middot;</span>Billed for each service<span class="sep">&middot;</span>Due 1 October 2026, 14 days ago</div>
+    <div class="drnote stop">Two visits in this period were recorded at a Kwik Trip location that is not linked to this contract, so they are not on the draft and are not in the amount above. Six locations are listed on the contract and eight are set up in the system. Matching the locations to the contract adds the missing work.</div>
+    <div class="dract">
+      <button class="btn btn-amber btn-sm" type="button">Match the unlinked visits</button>
+      <button class="btn btn-ghost btn-sm" type="button">Review and send anyway</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+  </div>
+
+  <div class="drow is-stop">
+    <div class="drhead">
+      <span class="drname">Prairie Kids Club &mdash; Snow</span>
+      <span class="chip chip-active">Active</span>
+      <span class="chip chip-stop">Terms not sufficient</span>
+      <span class="grow"></span>
+      <span class="dramt none">No amount can be worked out</span>
+    </div>
+    <div class="drmeta">1 &ndash; 30 September 2026<span class="sep">&middot;</span>Seasonal<span class="sep">&middot;</span>Due 1 October 2026, 14 days ago</div>
+    <div class="drnote stop">This contract does not carry the information needed to work out an amount. Missing: the seasonal charge, and the number of monthly instalments it is spread across. Adding them to the contract allows the draft to be assembled.</div>
+    <div class="dract">
+      <button class="btn btn-amber btn-sm" type="button">Add the missing terms</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+    <p class="drsub">This account also covers a residence billed inside its price, so its figure is not simply the seasonal rate.</p>
+  </div>
+
+  <div class="drow is-quiet">
+    <div class="drhead">
+      <span class="drname">Ironwood &mdash; Snow</span>
+      <span class="chip chip-active">Active</span>
+      <span class="grow"></span>
+      <span class="dramt none">Nothing to bill</span>
+    </div>
+    <div class="drmeta">1 &ndash; 30 September 2026<span class="sep">&middot;</span>Billed for each service<span class="sep">&middot;</span>Period ended 30 September 2026</div>
+    <div class="drnote">No billable work was recorded against this contract during the period, which is expected for a snow contract in September. Marking the period complete moves the contract on to October without creating an invoice.</div>
+    <div class="dract">
+      <button class="btn btn-ghost btn-sm" type="button">Mark the period complete</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+  </div>
+
+  <div class="drow is-stop">
+    <div class="drhead">
+      <span class="drname">Capitol Warehouse &mdash; Grounds</span>
+      <span class="chip chip-active">Active</span>
+      <span class="chip chip-stop">Work not matched</span>
+      <span class="grow"></span>
+      <span class="dramt">$600.00</span>
+    </div>
+    <div class="drmeta">October 2026<span class="sep">&middot;</span>Flat monthly<span class="sep">&middot;</span>Due today</div>
+    <div class="drnote stop">A landscaping project is running at this site alongside the grounds contract, and one visit on 6 October has not been matched to either of them. It is not priced on this draft, because pricing it here and again on the project&rsquo;s invoice would bill the customer twice. Matching the visit decides which invoice it belongs on.</div>
+    <div class="dract">
+      <button class="btn btn-amber btn-sm" type="button">Match this visit</button>
+      <button class="btn btn-ghost btn-sm" type="button">Review and send without it</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+    <p class="drsub">Pays one to two months behind; chased from the due date.</p>
+  </div>
+
+  <div class="drow is-ready">
+    <div class="drhead">
+      <span class="drname">Kings Mountain &mdash; Lawn &amp; Snow</span>
+      <span class="chip chip-active">Active</span>
+      <span class="chip chip-warn">Unconfirmed figures</span>
+      <span class="grow"></span>
+      <span class="dramt">$1,582.39</span>
+    </div>
+    <div class="drmeta">October 2026<span class="sep">&middot;</span>Flat monthly, one price for the whole year<span class="sep">&middot;</span>Due today</div>
+    <div class="dract">
+      <button class="btn btn-green btn-sm" type="button">Review and send</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+    <p class="drsub">Billed through Caribou Property Management.</p>
+  </div>
+
+  <div class="drow is-ready">
+    <div class="drhead">
+      <span class="drname">Crown Point &mdash; Lawn &amp; Snow</span>
+      <span class="chip chip-active">Active</span>
+      <span class="chip chip-stop">Terms disagree<span class="hbtn" data-tip="More than one contract on this account describes the same terms. The disagreement is recorded and shown rather than resolved: someone decides which contract governs.">?</span></span>
+      <span class="grow"></span>
+      <span class="dramt">$1,731.31</span>
+    </div>
+    <div class="drmeta">October 2026<span class="sep">&middot;</span>Flat monthly, one price for the whole year<span class="sep">&middot;</span>Due today</div>
+    <div class="drnote">An earlier snow contract for this account is also on file and its status has not been settled, so two contracts describe the same snow terms. The amount above comes from the combined annual contract, which is the one in force. Settling the older contract removes the disagreement.</div>
+    <div class="dract">
+      <button class="btn btn-green btn-sm" type="button">Review and send</button>
+      <a class="lnk" href="#">Settle the older contract</a>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+    <p class="drsub">Billed through Lake City Property Management.</p>
+  </div>
+
+  <div class="drow is-ready">
+    <div class="drhead">
+      <span class="drname">Entercom (Audacy) &mdash; Grounds</span>
+      <span class="chip chip-active">Active</span>
+      <span class="grow"></span>
+      <span class="dramt">$550.00</span>
+    </div>
+    <div class="drmeta">October 2026<span class="sep">&middot;</span>Flat monthly<span class="sep">&middot;</span>Due today</div>
+    <div class="dract">
+      <button class="btn btn-green btn-sm" type="button">Review and send</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+  </div>
+
+  <p class="ledesub" style="margin-top:16px">Ten contracts are due. Eight can be drafted as they stand and come to $18,985.13 in total. Ironwood has nothing to bill for the period, and Prairie Kids Club needs terms added before an amount can be worked out.</p>
+
+</div>
+</section>
+
+<!-- ══════════════════ STATE 2 — RENEWALS ══════════════════ -->
+<section class="mstate" id="s2" data-cap="State 2 — Renewals. Contracts that have already lapsed, most overdue first; contracts ending inside the 180-day lead window; and a contract that has been signed but has not yet started, which is listed separately because it is not yet in force. Below the section, the renewal sheet for Legacy of DeForest, with the agreed 4% annual increase already applied as a suggestion.">
+<div class="frame">
+
+  <div class="navbar"><span>Dashboard</span><span>Pipeline</span><span>Projects</span><span class="on">Contracts</span><span>Timeclock</span><span>Watch</span><span>Data</span></div>
+
+  <div class="strip">
+    <button class="seg" type="button"><span class="n">10</span><span class="t">Due to invoice</span><span class="sub">$18,985.13 assembled</span></button>
+    <button class="seg action" type="button"><span class="n">4</span><span class="t">Renewals</span><span class="sub">2 lapsed, 2 ending soon</span></button>
+    <button class="seg ref" type="button"><span class="n">27</span><span class="t">All contracts</span><span class="sub">across 19 accounts</span></button>
+  </div>
+
+  <div class="stephead">
+    <span class="stepnum">Step 2</span>
+    <h2>Renewals</h2>
+  </div>
+  <p class="steplede">Contracts that have already lapsed, followed by contracts ending within the next 180 days. Renewing a contract creates a new one that begins where the current one ends, with the current terms carried across and any agreed annual increase already applied as a suggestion.</p>
+  <details class="howto">
+    <summary>More about this step</summary>
+    <div class="howto-body">
+      <p><b>A lapsed contract is not closed on our side.</b> It stays on file and keeps being invoiced while the account is being serviced, because the alternative is an account quietly leaving the invoicing run and the work going unbilled.</p>
+      <p><b>A contract that has been signed but has not yet started is listed separately.</b> It is not yet in force, so it is not invoiced and does not appear under Due to invoice until its start date passes.</p>
+      <p><b>The current contract is kept when a renewal is created.</b> The renewal is created as a draft; the contract it replaces is marked as replaced once the renewal is signed, and both remain readable afterwards.</p>
+      <p><b>How far ahead this looks.</b> Contracts ending within the next 180 days are listed. That period can be changed, and a contract with no end date recorded does not appear here at all.</p>
+    </div>
+  </details>
+
+  <div class="sechead"><h3>Lapsed</h3><span class="c">2 contracts</span></div>
+
+  <div class="drow is-stop">
+    <div class="drhead">
+      <span class="drname">Crown Point &mdash; Snow</span>
+      <span class="chip chip-expired">Expired</span>
+      <span class="chip chip-stop">Terms disagree</span>
+      <span class="grow"></span>
+      <span class="dramt none">Ended 501 days ago</span>
+    </div>
+    <div class="drmeta">1 July 2022 &ndash; 1 June 2025<span class="sep">&middot;</span>Signed contract<span class="sep">&middot;</span>Managed by Lake City Property Management</div>
+    <div class="drnote stop">The combined annual contract signed in July 2025 may already cover this account&rsquo;s snow work. Until that is settled, two contracts describe the same terms and the account&rsquo;s effective terms are shown as disputed. If the annual contract covers it, this one is marked as replaced; if not, it needs renewing before the season.</div>
+    <div class="dract">
+      <button class="btn btn-amber btn-sm" type="button">Settle this contract</button>
+      <button class="btn btn-ghost btn-sm" type="button">Renew</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+  </div>
+
+  <div class="drow is-late">
+    <div class="drhead">
+      <span class="drname">Heritage Homes &mdash; Snow</span>
+      <span class="chip chip-expired">Expired</span>
+      <span class="chip chip-warn">Still being serviced</span>
+      <span class="grow"></span>
+      <span class="dramt none">Ended 228 days ago</span>
+    </div>
+    <div class="drmeta">1 March 2023 &ndash; 1 March 2026<span class="sep">&middot;</span>Signed contract<span class="sep">&middot;</span>$6,280.00 a month across five instalments</div>
+    <div class="drnote warn">The invoice for November is already due and is listed under Due to invoice. The snow season begins on 1 November, so a renewal signed before then keeps the paperwork and the invoicing in step.</div>
+    <div class="dract">
+      <button class="btn btn-green btn-sm" type="button">Renew</button>
+      <a class="lnk" href="#">Open contract</a>
+      <a class="lnk" href="#">Go to the invoice that is due</a>
+    </div>
+  </div>
+
+  <div class="sechead"><h3>Ending soon</h3><span class="c">2 contracts, within 180 days</span></div>
+
+  <div class="drow is-late">
+    <div class="drhead">
+      <span class="drname">Entercom (Audacy) &mdash; Snow</span>
+      <span class="chip chip-sent">Sent</span>
+      <span class="grow"></span>
+      <span class="dramt none">Ends in 167 days</span>
+    </div>
+    <div class="drmeta">Season 2026&ndash;2027, ending 31 March 2027<span class="sep">&middot;</span>Confirmed by email each season<span class="sep">&middot;</span>$300.00 a month</div>
+    <div class="drnote">This account confirms by email each season rather than signing a contract, so the estimate for the coming season has been sent and is waiting on a reply. The renewal for the season after can be prepared now or left until the reply arrives.</div>
+    <div class="dract">
+      <button class="btn btn-ghost btn-sm" type="button">Renew</button>
+      <a class="lnk" href="#">Record the reply</a>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+  </div>
+
+  <div class="drow is-late">
+    <div class="drhead">
+      <span class="drname">Legacy of DeForest &mdash; Snow</span>
+      <span class="chip chip-active">Active</span>
+      <span class="chip chip-info">Increases 4% each year</span>
+      <span class="grow"></span>
+      <span class="dramt none">Ends in 168 days</span>
+    </div>
+    <div class="drmeta">1 November 2024 &ndash; 1 April 2027<span class="sep">&middot;</span>Signed contract<span class="sep">&middot;</span>$2,641.00 a month across five instalments, $13,205.00 a season</div>
+    <div class="drnote">Cathy handles billing for this account and Chad handles renewals, so the renewal goes to Chad. The agreed annual increase is applied to the new figure as a suggestion and can be changed.</div>
+    <div class="dract">
+      <button class="btn btn-green btn-sm" type="button">Renew</button>
+      <a class="lnk" href="#">Open contract</a>
+    </div>
+  </div>
+
+  <div class="sechead"><h3>Signed, not yet started</h3><span class="c">1 contract, nothing to do</span></div>
+
+  <div class="drow is-quiet">
+    <div class="drhead">
+      <span class="drname">Liberty Square &mdash; Snow 2026&ndash;2029</span>
+      <span class="chip chip-signed">Signed</span>
+      <span class="chip chip-quiet">Starts in 17 days</span>
+      <span class="grow"></span>
+      <span class="dramt none">Starts 1 November 2026</span>
+    </div>
+    <div class="drmeta">1 November 2026 &ndash; 1 March 2029<span class="sep">&middot;</span>Signed contract<span class="sep">&middot;</span>$3,398.00 a month</div>
+    <div class="drnote">This contract is signed but has not started, so it is not invoiced yet and does not appear under Due to invoice. It becomes active on its start date and replaces the 2023&ndash;2026 contract at the same time. The account&rsquo;s snow price is fixed for the term.</div>
+    <div class="dract">
+      <a class="lnk" href="#">Open contract</a>
+      <a class="lnk" href="#">See the contract it replaces</a>
+    </div>
+  </div>
+
+  <!-- the renewal sheet -->
+  <p class="ledesub" style="margin:26px 0 8px"><b>Below:</b> the sheet that opens from <b>Renew</b> on Legacy of DeForest.</p>
+  <div class="scrim">
+    <div class="sheet">
+      <h3 class="sheet-title">Renew Legacy of DeForest &mdash; Snow</h3>
+      <p class="sheet-lede">This creates a new contract that begins where the current one ends. The current contract stays on file and is marked as replaced once the new one is signed. Nothing is sent to the customer from here &mdash; the new contract is created as a draft.</p>
+
+      <div class="blockcard" style="margin-top:16px">
+        <h4>Term</h4>
+        <div class="frow"><span class="fk">Starts</span><span class="fv">1 April 2027</span></div>
+        <div class="frow"><span class="fk">Ends</span><span class="fv">1 April 2030</span></div>
+        <p class="drsub" style="margin-top:8px">Prefilled to begin on the day the current contract ends. Both dates can be changed before the draft is saved.</p>
+      </div>
+
+      <div class="blockcard">
+        <h4>Charge</h4>
+        <div class="frow"><span class="fk">Monthly amount</span><span class="fv"><b>$2,746.64</b> <span class="chip chip-info">4% increase applied</span></span></div>
+        <div class="frow"><span class="fk">Number of instalments</span><span class="fv">5, November to March</span></div>
+        <div class="frow"><span class="fk">Season total</span><span class="fv">$13,733.20, compared with $13,205.00 for the current season</span></div>
+        <p class="drsub" style="margin-top:8px">The current amount is $2,641.00 a month. The 4% annual increase recorded on this contract has been applied. Change it if the renewal was agreed at a different figure.</p>
+      </div>
+
+      <div class="blockcard">
+        <h4>Carried across from the current contract</h4>
+        <div class="frow"><span class="fk">Billing</span><span class="fv">Invoiced on the 1st, payment due in 30 days, addressed to Cathy</span></div>
+        <div class="frow"><span class="fk">Renewal contact</span><span class="fv">Chad</span></div>
+        <div class="frow"><span class="fk">Service and rate lines</span><span class="fv">Carried across unchanged; the annual increase is not applied to them automatically</span></div>
+        <div class="frow"><span class="fk">Snow terms</span><span class="fv">No seasonal cap, floor or credit is recorded on the current contract</span></div>
+        <div class="frow"><span class="fk">Sites</span><span class="fv">Legacy of DeForest, 1 site</span></div>
+      </div>
+
+      <div class="quietbox">The new contract is created as a draft. It appears in the register straight away, is not invoiced, and can be edited before it is sent to the customer.</div>
+
+      <div class="sheet-actions">
+        <button class="btn btn-ghost" type="button">Cancel</button>
+        <button class="btn btn-green" type="button">Create the renewal as a draft</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ══════════════════ STATE 3 — ALL CONTRACTS ══════════════════ -->
+<section class="mstate" id="s3" data-cap="State 3 — the register. Twenty-seven contracts across nineteen accounts, grouped by account because an account may hold more than one at a time. All seven statuses appear: draft, sent, signed, active, expired, replaced and cancelled. Figures taken from the office spreadsheet carry an unconfirmed mark, and where two contracts on one account describe the same terms the disagreement is recorded above the group rather than resolved.">
+<div class="frame">
+
+  <div class="navbar"><span>Dashboard</span><span>Pipeline</span><span>Projects</span><span class="on">Contracts</span><span>Timeclock</span><span>Watch</span><span>Data</span></div>
+
+  <div class="strip">
+    <button class="seg" type="button"><span class="n">10</span><span class="t">Due to invoice</span><span class="sub">$18,985.13 assembled</span></button>
+    <button class="seg" type="button"><span class="n">4</span><span class="t">Renewals</span><span class="sub">2 lapsed, 2 ending soon</span></button>
+    <button class="seg ref action" type="button"><span class="n">27</span><span class="t">All contracts</span><span class="sub">across 19 accounts</span></button>
+  </div>
+
+  <div class="stephead">
+    <span class="stepnum ref">Reference</span>
+    <h2>All contracts</h2>
+  </div>
+  <p class="steplede">Every contract on file, including those that have expired, been replaced or been cancelled. Contracts are grouped by account, since an account may hold more than one at the same time.</p>
+  <details class="howto">
+    <summary>More about this section</summary>
+    <div class="howto-body">
+      <p><b>What each status means.</b> A contract is a <b>draft</b> while it is being written, <b>sent</b> once it has gone to the customer, and <b>signed</b> when it comes back. It becomes <b>active</b> on its start date and <b>expired</b> after its end date, unless a renewal has taken its place, in which case it is marked <b>replaced</b>. <b>Cancelled</b> is used when an agreement ends before its term does.</p>
+      <p><b>Where a figure came from.</b> A figure taken from the office contract spreadsheet is marked as unconfirmed until it has been checked against the signed document. Unconfirmed figures are still used to assemble invoices, and the review screen says so before anything is created.</p>
+      <p><b>When two contracts disagree.</b> Where more than one contract on an account describes the same terms, the disagreement is recorded and shown rather than resolved. Someone decides which contract governs; the system does not choose one for them.</p>
+      <p><b>Contracts and the rates in Yeti.</b> Each service line on a contract is matched to the service the crew selects in Yeti. Where the rate recorded on the contract and the rate set up in Yeti differ, the contract is the authority and the difference is flagged.</p>
+    </div>
+  </details>
+
+  <div class="card">
+    <div class="ctlrow">
+      <label class="ctl"><span class="ctl-lab">Status</span><select><option>All statuses</option><option>Active</option><option>Signed, not yet started</option><option>Expired</option><option>Draft</option><option>Sent</option><option>Replaced</option><option>Cancelled</option></select></label>
+      <label class="ctl"><span class="ctl-lab">Work</span><select><option>Lawn and snow</option><option>Lawn only</option><option>Snow only</option></select></label>
+      <label class="ctl"><span class="ctl-lab">Account</span><input type="text" placeholder="Search by account name"></label>
+      <span class="grow"></span>
+      <button class="btn btn-ghost btn-sm" type="button">Export</button>
+      <button class="btn btn-green btn-sm" type="button">New contract</button>
+    </div>
+  </div>
+
+  <div class="tscroll">
+    <table class="reg">
+      <thead><tr><th>Contract</th><th>Instrument</th><th>Term</th><th>Status</th><th>Charge</th><th>Next invoice</th></tr></thead>
+      <tbody>
+
+        <tr class="grp"><td colspan="6">Amrize<span class="cnt">2 contracts</span></td></tr>
+        <tr class="row"><td class="nm">Grounds &mdash; season 2026<span class="subnote">Purchase order required on every invoice; annual compliance through Avetta</span></td><td>Accepted estimate</td><td>1 Apr &ndash; 31 Oct 2026</td><td><span class="chip chip-active">Active</span></td><td class="money">$4,771.43 / month <span class="chip chip-warn">Unconfirmed</span></td><td class="money">Overdue since 1 Oct</td></tr>
+        <tr class="row"><td class="nm">Snow &mdash; season 2026&ndash;2027</td><td>Estimate</td><td>1 Nov 2026 &ndash; 31 Mar 2027</td><td><span class="chip chip-draft">Draft</span></td><td class="money">$4,555.00 / month <span class="chip chip-warn">Unconfirmed</span></td><td class="money">&mdash;</td></tr>
+
+        <tr class="grp"><td colspan="6">Bayer Crop Science<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Grounds &mdash; season 2026<span class="subnote">Pays 90 days after invoice</span></td><td>Accepted estimate</td><td>1 Apr &ndash; 31 Oct 2026</td><td><span class="chip chip-active">Active</span></td><td class="money">$650.00 per mow</td><td class="money">31 Oct 2026</td></tr>
+
+        <tr class="grp"><td colspan="6">Capitol Warehouse<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Grounds &mdash; season 2026<span class="subnote">Pays one to two months behind; chased from the due date</span></td><td>Accepted estimate</td><td>1 Apr &ndash; 31 Oct 2026</td><td><span class="chip chip-active">Active</span></td><td class="money">$600.00 / month &times; 7</td><td class="money">15 Oct 2026</td></tr>
+
+        <tr class="grp"><td colspan="6">Crown Point<span class="cnt">2 contracts</span></td></tr>
+        <tr class="conf"><td colspan="6">Two contracts on this account describe the same snow terms. The combined annual contract is being used; the earlier snow contract has not been settled. The disagreement is recorded here and is not resolved automatically. <a class="lnk" href="#">Settle this</a></td></tr>
+        <tr class="row"><td class="nm">Lawn &amp; Snow &mdash; combined annual<span class="subnote">Managed by Lake City Property Management &middot; no price increase agreed</span></td><td>Signed contract</td><td>1 Jul 2025 &ndash; 1 Jul 2028</td><td><span class="chip chip-active">Active</span></td><td class="money">$1,731.31 / month &times; 12 <span class="chip chip-warn">Yeti rate differs</span></td><td class="money">Due today</td></tr>
+        <tr class="row"><td class="nm">Snow</td><td>Signed contract</td><td>1 Jul 2022 &ndash; 1 Jun 2025</td><td><span class="chip chip-expired">Expired</span></td><td class="money">&mdash;</td><td class="money">&mdash;</td></tr>
+
+        <tr class="grp"><td colspan="6">DeForest Bible Church<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Lawn &amp; Snow<span class="subnote">Mowing must be carried out on a Friday or a Saturday morning</span></td><td>Signed contract</td><td>1 Mar 2024 &ndash; 1 Mar 2027</td><td><span class="chip chip-active">Active</span></td><td class="money">Per service</td><td class="money">31 Oct 2026</td></tr>
+
+        <tr class="grp"><td colspan="6">Entercom (Audacy)<span class="cnt">2 contracts</span></td></tr>
+        <tr class="row"><td class="nm">Grounds &mdash; season 2026</td><td>Confirmed by email</td><td>1 Apr &ndash; 31 Oct 2026</td><td><span class="chip chip-active">Active</span></td><td class="money">$550.00 / month</td><td class="money">Due today</td></tr>
+        <tr class="row"><td class="nm">Snow &mdash; season 2026&ndash;2027<span class="subnote">Waiting on the customer&rsquo;s email confirmation</span></td><td>Estimate</td><td>1 Nov 2026 &ndash; 31 Mar 2027</td><td><span class="chip chip-sent">Sent</span></td><td class="money">$300.00 / month</td><td class="money">&mdash;</td></tr>
+
+        <tr class="grp"><td colspan="6">Heritage Homes<span class="cnt">2 contracts</span></td></tr>
+        <tr class="row"><td class="nm">Lawn<span class="subnote">Managed by Madison Property &middot; invoiced on the 1st for the following month</span></td><td>Signed contract</td><td>1 Apr 2024 &ndash; 1 Oct 2027</td><td><span class="chip chip-active">Active</span></td><td class="money">$1,701.14 / month &times; 7</td><td class="money">1 Nov 2026</td></tr>
+        <tr class="row"><td class="nm">Snow<span class="subnote">Lapsed, and the account is still being serviced</span></td><td>Signed contract</td><td>1 Mar 2023 &ndash; 1 Mar 2026</td><td><span class="chip chip-expired">Expired</span></td><td class="money">$6,280.00 / month &times; 5 <span class="chip chip-warn">Unconfirmed</span></td><td class="money">Overdue since 1 Oct</td></tr>
+
+        <tr class="grp"><td colspan="6">Hyland Hills<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Snow<span class="subnote">Account no longer serviced</span></td><td>Signed contract</td><td>1 Nov 2022 &ndash; 1 Mar 2025</td><td><span class="chip chip-cancelled">Cancelled</span></td><td class="money">&mdash;</td><td class="money">&mdash;</td></tr>
+
+        <tr class="grp"><td colspan="6">Ironwood<span class="cnt">2 contracts</span></td></tr>
+        <tr class="row"><td class="nm">Grounds &mdash; season 2026<span class="subnote">Managed by Elite Properties</span></td><td>Accepted estimate</td><td>1 Apr &ndash; 31 Oct 2026</td><td><span class="chip chip-active">Active</span></td><td class="money">$75.00 per mow</td><td class="money">31 Oct 2026</td></tr>
+        <tr class="row"><td class="nm">Snow &mdash; season 2026&ndash;2027<span class="subnote">Waiting on a signature</span></td><td>Estimate</td><td>1 Nov 2026 &ndash; 31 Mar 2027</td><td><span class="chip chip-sent">Sent</span></td><td class="money">Per service</td><td class="money">&mdash;</td></tr>
+
+        <tr class="grp"><td colspan="6">Kings Mountain<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Lawn &amp; Snow &mdash; combined annual<span class="subnote">Managed by Caribou Property Management &middot; no price increase agreed</span></td><td>Signed contract</td><td>1 Apr 2025 &ndash; 1 Mar 2028</td><td><span class="chip chip-active">Active</span></td><td class="money">$1,582.39 / month &times; 12 <span class="chip chip-warn">Unconfirmed</span></td><td class="money">Due today</td></tr>
+
+        <tr class="grp"><td colspan="6">Kwik Trip<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Grounds &amp; Snow<span class="subnote">Billed through ServiceChannel &middot; 6 locations listed, 8 set up in the system</span></td><td>Customer&rsquo;s own paperwork</td><td>1 Jan &ndash; 31 Dec 2026</td><td><span class="chip chip-active">Active</span></td><td class="money">Per service <span class="chip chip-warn">Unconfirmed</span></td><td class="money">Overdue since 1 Oct</td></tr>
+
+        <tr class="grp"><td colspan="6">Legacy of DeForest<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Snow<span class="subnote">Increases 4% each year &middot; billing to Cathy, renewals to Chad</span></td><td>Signed contract</td><td>1 Nov 2024 &ndash; 1 Apr 2027</td><td><span class="chip chip-active">Active</span></td><td class="money">$2,641.00 / month &times; 5 <span class="chip chip-warn">Unconfirmed</span></td><td class="money">1 Nov 2026</td></tr>
+
+        <tr class="grp"><td colspan="6">Liberty Square<span class="cnt">3 contracts</span></td></tr>
+        <tr class="row"><td class="nm">Grounds<span class="subnote">Tax exempt &middot; fertiliser applications charged on as they are carried out</span></td><td>Signed contract</td><td>1 Apr 2025 &ndash; 31 Oct 2028</td><td><span class="chip chip-active">Active</span></td><td class="money">$260.00 per mow</td><td class="money">Overdue since 30 Sep</td></tr>
+        <tr class="row"><td class="nm">Snow 2026&ndash;2029<span class="subnote">Signed in advance &middot; no price increase for snow</span></td><td>Signed contract</td><td>1 Nov 2026 &ndash; 1 Mar 2029</td><td><span class="chip chip-signed">Signed</span></td><td class="money">$3,398.00 / month</td><td class="money">1 Nov 2026</td></tr>
+        <tr class="row"><td class="nm">Snow 2023&ndash;2026<span class="subnote">Replaced by Snow 2026&ndash;2029</span></td><td>Signed contract</td><td>1 Nov 2023 &ndash; 1 Mar 2026</td><td><span class="chip chip-replaced">Replaced</span></td><td class="money">&mdash;</td><td class="money">&mdash;</td></tr>
+
+        <tr class="grp"><td colspan="6">Old Dominion<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Lawn &amp; Snow<span class="subnote">Agreed verbally &middot; no end date recorded</span></td><td>Agreed verbally</td><td>From 1 Apr 2021</td><td><span class="chip chip-active">Active</span></td><td class="money">Per service <span class="chip chip-warn">Unconfirmed</span></td><td class="money">31 Oct 2026</td></tr>
+
+        <tr class="grp"><td colspan="6">Paradise Paws<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Snow &mdash; season 2026&ndash;2027<span class="subnote">Prepaid in full, usually in late November</span></td><td>Agreed verbally</td><td>1 Nov 2026 &ndash; 31 Mar 2027</td><td><span class="chip chip-draft">Draft</span></td><td class="money">Around $5,000.00 <span class="chip chip-warn">Unconfirmed</span></td><td class="money">&mdash;</td></tr>
+
+        <tr class="grp"><td colspan="6">Prairie Kids Club<span class="cnt">2 contracts</span></td></tr>
+        <tr class="row"><td class="nm">Grounds<span class="subnote">Price includes a residence billed inside this account</span></td><td>Signed contract</td><td>1 Apr 2025 &ndash; 1 Apr 2028</td><td><span class="chip chip-active">Active</span></td><td class="money">No amount on file <span class="chip chip-stop">Terms needed</span></td><td class="money">31 Oct 2026</td></tr>
+        <tr class="row"><td class="nm">Snow</td><td>Signed contract</td><td>1 Nov 2025 &ndash; 1 Mar 2028</td><td><span class="chip chip-active">Active</span></td><td class="money">No amount on file <span class="chip chip-stop">Terms needed</span></td><td class="money">Overdue since 1 Oct</td></tr>
+
+        <tr class="grp"><td colspan="6">Roger Turner<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Lawn &amp; Snow &mdash; season 2026&ndash;2027<span class="subnote">Prepays both seasons</span></td><td>Accepted estimate</td><td>1 Apr 2026 &ndash; 31 Mar 2027</td><td><span class="chip chip-active">Active</span></td><td class="money">No amount on file <span class="chip chip-stop">Terms needed</span></td><td class="money">&mdash;</td></tr>
+
+        <tr class="grp"><td colspan="6">Tim O&rsquo;Brien Homes<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Grounds<span class="subnote">Priced per property; addresses change as lots are sold</span></td><td>Standing arrangement</td><td>From 1 Mar 2022</td><td><span class="chip chip-active">Active</span></td><td class="money">Per property</td><td class="money">Invoiced separately</td></tr>
+
+        <tr class="grp"><td colspan="6">World Wide Logistics<span class="cnt">1 contract</span></td></tr>
+        <tr class="row"><td class="nm">Lawn &amp; Snow &mdash; season 2026<span class="subnote">Salting is included in the ploughing price</span></td><td>Accepted estimate</td><td>1 Apr 2026 &ndash; 31 Mar 2027</td><td><span class="chip chip-active">Active</span></td><td class="money">Per service</td><td class="money">31 Oct 2026</td></tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <p class="ledesub" style="margin-top:14px">Twenty-seven contracts across nineteen accounts. Eight carry a figure taken from the office spreadsheet that has not yet been checked against a signed document, and three carry no charge at all until their terms are recorded.</p>
+
+</div>
+</section>
+
+<!-- ══════════════════ STATE 4 — CONTRACT DETAIL ══════════════════ -->
+<section class="mstate" id="s4" data-cap="State 4 — one contract, opened from anywhere on the page. Old Dominion is a verbal arrangement with no end date, priced per service, and every figure on it came from the office spreadsheet. It shows the three ways a term can be absent: not recorded, not applicable, and recorded but disputed. The service lines carry the Yeti service each one is matched to.">
+<div class="frame">
+
+  <div class="navbar"><span>Dashboard</span><span>Pipeline</span><span>Projects</span><span class="on">Contracts</span><span>Timeclock</span><span>Watch</span><span>Data</span></div>
+
+  <p class="crumb"><a href="#">Contracts</a> &rsaquo; <a href="#">Old Dominion</a> &rsaquo; Lawn &amp; Snow</p>
+
+  <div class="entcard">
+    <div class="enthead">
+      <div>
+        <div class="cust">Old Dominion &mdash; Lawn &amp; Snow</div>
+        <p class="crumb" style="margin:3px 0 0">Account: <a href="#">Old Dominion</a></p>
+      </div>
+      <div class="chiprow">
+        <span class="chip chip-active">Active</span>
+        <span class="chip chip-quiet">Agreed verbally</span>
+        <span class="chip chip-warn">Unconfirmed figures</span>
+      </div>
+    </div>
+    <div class="facts">
+      <div class="fact"><span class="fact-k">Instrument</span><span class="fact-v">Agreed verbally with Paul</span></div>
+      <div class="fact"><span class="fact-k">Work covered</span><span class="fact-v">Lawn and snow</span></div>
+      <div class="fact"><span class="fact-k">Term</span><span class="fact-v">From 1 April 2021, no end date recorded</span></div>
+      <div class="fact"><span class="fact-k">Charged</span><span class="fact-v">For each service</span></div>
+      <div class="fact"><span class="fact-k">Invoiced through</span><span class="fact-v">30 September 2026</span></div>
+      <div class="fact"><span class="fact-k">Next invoice</span><span class="fact-v">31 October 2026</span></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-green btn-sm" type="button">Edit terms</button>
+      <button class="btn btn-ghost btn-sm" type="button">Change status</button>
+      <button class="btn btn-ghost btn-sm" type="button">Attach a document</button>
+      <button class="btn btn-ghost btn-sm" type="button">Draft an invoice now</button>
+    </div>
+  </div>
+
+  <div class="quietbox warn">No end date is recorded on this contract, so it does not appear under Renewals and nothing will prompt a review of it. Adding an end date brings it into the renewal list.</div>
+
+  <div class="blockcard">
+    <h4>Contract</h4>
+    <div class="frow"><span class="fk">Instrument</span><span class="fv">Agreed verbally with Paul</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Term begins</span><span class="fv">1 April 2021</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Term ends</span><span class="fv">Not recorded</span><span class="prov">Absent</span></div>
+    <div class="frow"><span class="fk">Renewal</span><span class="fv">Reviewed with Matt at the start of each season</span><span class="prov sheet">Spreadsheet</span></div>
+    <div class="frow"><span class="fk">Signed copy</span><span class="fv">None &mdash; this arrangement is not on paper</span><span class="prov office">Office</span></div>
+  </div>
+
+  <div class="blockcard">
+    <h4>Billing</h4>
+    <div class="frow"><span class="fk">Charged</span><span class="fv">For each service</span><span class="prov sheet">Spreadsheet</span></div>
+    <div class="frow"><span class="fk">Invoiced</span><span class="fv">Monthly, at the end of the month</span><span class="prov sheet">Spreadsheet</span></div>
+    <div class="frow"><span class="fk">Payment due</span><span class="fv">Within 7 business days</span><span class="prov doc">Document</span></div>
+    <div class="frow"><span class="fk">Annual increase</span><span class="fv">None recorded</span><span class="prov">Absent</span></div>
+    <div class="frow"><span class="fk">Purchase order</span><span class="fv">Not required</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Billed through a portal</span><span class="fv">No</span><span class="prov office">Office</span></div>
+  </div>
+
+  <div class="blockcard">
+    <h4>Snow terms</h4>
+    <div class="frow"><span class="fk">Seasonal cap</span><span class="fv">Not applicable &mdash; this account is charged for each push rather than at a seasonal rate</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Credit floor</span><span class="fv">Not applicable</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Credit rate</span><span class="fv">Not applicable</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Trigger depth</span><span class="fv">Not recorded. The rates below imply ploughing begins at one inch, but that has not been confirmed against a document.</span><span class="prov">Absent</span></div>
+  </div>
+
+  <div class="blockcard">
+    <h4>Scope</h4>
+    <div class="frow"><span class="fk">Sites</span><span class="fv">Old Dominion, DeForest &mdash; 1 site</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Included</span><span class="fv">Sidewalk clearing is included in the ploughing price</span><span class="prov sheet">Spreadsheet</span></div>
+    <div class="frow"><span class="fk">Mulch</span><span class="fv">Supplied as needed and charged separately</span><span class="prov sheet">Spreadsheet</span></div>
+    <div class="frow"><span class="fk">Operational notes</span><span class="fv">None recorded</span><span class="prov">Absent</span></div>
+  </div>
+
+  <div class="blockcard">
+    <h4>Sub-contracted work</h4>
+    <div class="frow"><span class="fk">Fertiliser applications</span><span class="fv">Six each season at $233.33 each, paid in full at the first application in spring</span><span class="prov sheet">Spreadsheet</span></div>
+  </div>
+
+  <div class="blockcard">
+    <h4>Payment history and notes</h4>
+    <div class="frow"><span class="fk">Payment behaviour</span><span class="fv">No concerns recorded</span><span class="prov office">Office</span></div>
+  </div>
+
+  <div class="blockcard">
+    <h4>Service and rate lines</h4>
+    <div class="tscroll" style="border:none">
+      <table class="reg" style="min-width:640px">
+        <thead><tr><th>Service in Yeti</th><th>Rate</th><th>Charged</th><th>Note</th></tr></thead>
+        <tbody>
+          <tr class="row"><td class="nm">Mowing</td><td class="money">$120.00</td><td>Each visit</td><td></td></tr>
+          <tr class="row"><td class="nm">Plow 1-4" w/ Salt</td><td class="money">$700.00</td><td>Each push</td><td>Sidewalks included</td></tr>
+          <tr class="row"><td class="nm">Plow 4+" w/ Salt</td><td class="money">$900.00</td><td>Each push</td><td>Sidewalks included</td></tr>
+          <tr class="row"><td class="nm">Plow-SALTED ONLY (NO PUSH)</td><td class="money">$375.00</td><td>Each visit</td><td></td></tr>
+          <tr class="row"><td class="nm">Plow Cleanup Post Storm</td><td class="money">$300.00</td><td>Each visit</td><td></td></tr>
+          <tr class="row"><td class="nm">Hand weeding</td><td class="money">$135.00</td><td>Per man-hour</td><td><span class="chip chip-warn">An earlier document reads $120.00</span></td></tr>
+          <tr class="row"><td class="nm">Spraying</td><td class="money">$100.00</td><td>Per man-hour</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="drsub" style="margin-top:9px">Every rate here came from the office contract spreadsheet and has not been checked against a document. Two figures are on file for hand weeding: $135.00 from the spreadsheet and $120.00 from an earlier contract document. The spreadsheet figure is in use because it is the more recent, and the difference is left showing until someone settles it.</p>
+    <p class="drsub">Each line is matched to the service the crew selects in Yeti. If a service is renamed the link holds; if it is removed, drafting stops on this contract and says which line is missing.</p>
+  </div>
+
+  <div class="blockcard">
+    <h4>Documents</h4>
+    <p class="drsub" style="margin:0">No documents are attached. This arrangement is verbal, so there is no signed copy to hold. Anything that does arrive &mdash; an emailed confirmation, a photograph of a signed page &mdash; can be attached here and stays with the contract.</p>
+    <div class="actions"><button class="btn btn-ghost btn-sm" type="button">Attach a document</button></div>
+  </div>
+
+  <div class="blockcard">
+    <h4>Related contracts</h4>
+    <p class="drsub" style="margin:0">No earlier or later version of this contract is on file. When this one is renewed, the renewal will be listed here and this contract will be marked as replaced.</p>
+  </div>
+
+  <div class="blockcard">
+    <h4>History</h4>
+    <div class="hist">
+      <div><span class="d">1 Oct 2026</span>Invoiced through advanced to 30 September 2026, with invoice 7104 &mdash; recurring invoicing</div>
+      <div><span class="d">12 Aug 2026</span>Payment terms recorded as 7 business days, from a contract document &mdash; Jen Wuebben</div>
+      <div><span class="d">7 Aug 2026</span>Service and rate lines recorded &mdash; Mike Baldwin</div>
+      <div><span class="d">6 Aug 2026</span>Contract created from the office contract spreadsheet &mdash; first load</div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ══════════════════ STATE 5 — REVIEW, THE DRAFT ══════════════════ -->
+<section class="mstate" id="s5" data-cap="State 5 — the first of the three review steps. The draft is assembled on our side and nothing exists in QuickBooks yet. Each line shows the visits that produced it, with the date, the site, the service the crew selected and whether it has been approved. Extras are separated from the covered work; a line with no rate on the contract waits for a price; two overlapping visits are held back; a visit that has not been approved is shown but not counted; and work belonging to a one-off project at the same site is noted outside the lines, never priced here.">
+<div class="frame">
+<div class="scrim">
+  <div class="sheet">
+
+    <h3 class="sheet-title">Amrize &mdash; Grounds &middot; September 2026</h3>
+    <p class="sheet-lede">This draft has been assembled from the contract and the work recorded against it. Nothing has been created in QuickBooks and nothing has been sent. Lines can be edited, added or left out here; the next step creates the invoice.</p>
+
+    <div class="steps">
+      <div class="stp on"><b>1 &middot; Check the draft</b>Assembled on our side</div>
+      <div class="stp"><b>2 &middot; Create</b>In QuickBooks</div>
+      <div class="stp"><b>3 &middot; Send</b>To the customer</div>
+    </div>
+
+    <div class="facts" style="margin:0 0 14px">
+      <div class="fact"><span class="fact-k">Contract</span><span class="fact-v">Grounds, season 2026 <span class="chip chip-active">Active</span></span></div>
+      <div class="fact"><span class="fact-k">Period covered</span><span class="fact-v">1 &ndash; 30 September 2026</span></div>
+      <div class="fact"><span class="fact-k">Invoiced through</span><span class="fact-v">31 August 2026</span></div>
+      <div class="fact"><span class="fact-k">Invoice was due</span><span class="fact-v">1 October 2026, 14 days ago</span></div>
+    </div>
+
+    <div class="quietbox warn">The monthly charge on this contract came from the office contract spreadsheet and has not been checked against a signed document. It is used as it stands unless it is changed here.</div>
+
+    <div class="blockcard">
+      <h4>Required before this invoice can be created</h4>
+      <div class="ctlrow">
+        <label class="ctl ctl-grow"><span class="ctl-lab">Purchase order number from Adam</span><input type="text" value="4500219877"></label>
+      </div>
+      <p class="drsub" style="margin-top:8px">This account requires a purchase order number on every invoice. It is placed on the invoice when it is created and cannot be added afterwards.</p>
+    </div>
+
+    <div class="lntbl">
+      <div class="lnhd"><span>Lines</span><span class="a">Amount</span></div>
+
+      <div class="ln">
+        <div class="lnmain">
+          <span class="lnname">Grounds maintenance &mdash; September 2026</span>
+          <span class="chip chip-quiet">Covered by the monthly charge</span>
+          <span class="lnamt">$4,771.43</span>
+        </div>
+        <p class="lndesc">The agreed monthly charge for the account. The visits below are the work it covers; they do not add to the amount, and are listed so the charge can be checked against what was actually done.</p>
+        <div class="ev">
+          <div class="evr"><span class="d">2 Sep</span><span class="s">Amrize, DeForest &mdash; Mowing</span><span class="st">Approved</span></div>
+          <div class="evr"><span class="d">9 Sep</span><span class="s">Amrize, DeForest &mdash; Mowing</span><span class="st">Approved</span></div>
+          <div class="evr"><span class="d">23 Sep</span><span class="s">Amrize, DeForest &mdash; Mowing</span><span class="st">Approved</span></div>
+        </div>
+        <div class="lnact"><a class="lnk" href="#">Edit this line</a><a class="lnk" href="#">Leave it out</a></div>
+      </div>
+
+      <div class="ln extra">
+        <div class="lnmain">
+          <span class="lnname">Fall clean-up</span>
+          <span class="chip chip-info">Extra</span>
+          <span class="lnamt">$1,285.00</span>
+        </div>
+        <p class="lndesc">Priced from the fall clean-up rate on this contract. It is charged separately because the monthly charge does not cover it.</p>
+        <div class="ev">
+          <div class="evr"><span class="d">29 Sep</span><span class="s">Amrize, DeForest &mdash; Fall Clean Up</span><span class="st">Approved</span></div>
+        </div>
+        <div class="lnact"><a class="lnk" href="#">Edit this line</a><a class="lnk" href="#">Leave it out</a></div>
+      </div>
+
+      <div class="ln pending">
+        <div class="lnmain">
+          <span class="lnname">Hand weeding &mdash; 6.0 hours</span>
+          <span class="chip chip-warn">Needs a price</span>
+          <span class="lnamt todo">Not priced</span>
+        </div>
+        <p class="lndesc">Two people worked for three hours each. This contract carries no rate for hand weeding, so no amount can be worked out. Entering a price here puts the line on this invoice; adding the rate to the contract prices it automatically next time.</p>
+        <div class="ev">
+          <div class="evr"><span class="d">3 Sep</span><span class="s">Amrize, DeForest &mdash; Weeding &middot; 2 people, 3.0 hours each</span><span class="st">Approved</span></div>
+        </div>
+        <div class="lnact"><a class="lnk" href="#">Enter a price</a><a class="lnk" href="#">Add the rate to the contract</a><a class="lnk" href="#">Leave it out</a></div>
+      </div>
+
+      <div class="ln blocked">
+        <div class="lnmain">
+          <span class="lnname">Mulch top-up &mdash; 4 yards</span>
+          <span class="chip chip-stop">Held back</span>
+          <span class="lnamt todo">$380.00 not counted</span>
+        </div>
+        <p class="lndesc">Two visits recorded at this site on 18 September overlap, so it is not clear whether the work was done once or twice. Neither is counted until someone confirms which record is right.</p>
+        <div class="ev">
+          <div class="evr"><span class="d">18 Sep</span><span class="s">Amrize, DeForest &mdash; Mulch &middot; 07:12 to 09:40</span><span class="st dup">Overlapping</span></div>
+          <div class="evr"><span class="d">18 Sep</span><span class="s">Amrize, DeForest &mdash; Mulch &middot; 07:20 to 09:05</span><span class="st dup">Overlapping</span></div>
+        </div>
+        <div class="lnact"><a class="lnk" href="#">Resolve the overlap</a></div>
+      </div>
+
+      <div class="ln pending">
+        <div class="lnmain">
+          <span class="lnname">One visit is not yet approved</span>
+          <span class="chip chip-warn">Not counted</span>
+          <span class="lnamt todo">&mdash;</span>
+        </div>
+        <p class="lndesc">Only approved work is invoiced. This visit is covered by the monthly charge, so approving it does not change the amount, but the record should be settled before the period is closed.</p>
+        <div class="ev">
+          <div class="evr"><span class="d">30 Sep</span><span class="s">Amrize, DeForest &mdash; Mowing</span><span class="st no">Awaiting approval</span></div>
+        </div>
+        <div class="lnact"><a class="lnk" href="#">Review this visit</a></div>
+      </div>
+
+      <div class="tot"><span class="l">Invoice total</span><span class="v">$6,056.43</span></div>
+    </div>
+
+    <div class="quietbox info"><b>Also recorded at this site, and not billed here.</b> One visit belongs to a one-off project rather than to this contract, so it is not priced on this invoice. It is invoiced when that project is finished and its own invoice is drawn up.
+      <div class="ev" style="margin-top:8px;border-left-color:#cfdcf5">
+        <div class="evr"><span class="d">11 Sep</span><span class="s">Amrize, DeForest &mdash; Curb Edging Install</span><span class="st" style="background:#e5eefb;color:#1e40af">Project work</span></div>
+      </div>
+    </div>
+
+    <p class="drsub">Two items are not on this invoice: one line has no price, and one is held back until an overlap is resolved. Both remain on the contract and appear on the next draft if they are settled after this invoice has gone out.</p>
+
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" type="button">Add a line</button>
+      <button class="btn btn-ghost" type="button">Cancel</button>
+      <button class="btn btn-green" type="button">Continue &mdash; create in QuickBooks</button>
+    </div>
+
+  </div>
+</div>
+</div>
+</section>
+
+<!-- ══════════════════ STATE 6 — REVIEW, CREATE AND SEND ══════════════════ -->
+<section class="mstate" id="s6" data-cap="State 6 — the second and third review steps, plus the collision path. Creating checks first that no other invoice already covers this contract and period. The read-back shows what QuickBooks actually built and is editable in place: lines can be corrected, added, removed or the whole invoice voided without leaving the Hub. Sending restates what this account requires, lists the addresses it will reach, and asks for confirmation because an email cannot be recalled. If someone edited the invoice in QuickBooks first, the differences are shown and nothing is overwritten without a decision. The last panel is the state after sending: the invoice can still be changed, and the screen says plainly that the customer is holding an older version and will not see the change until it is sent again.">
+<div class="frame">
+
+  <p class="ledesub" style="margin:0 0 8px"><b>Step 2 &mdash; create.</b></p>
+  <div class="scrim" style="margin-bottom:26px">
+    <div class="sheet">
+      <h3 class="sheet-title">Create this invoice in QuickBooks</h3>
+      <p class="sheet-lede">Amrize &mdash; Grounds, September 2026. One invoice for $6,056.43 across two lines, carrying purchase order 4500219877.</p>
+
+      <div class="steps">
+        <div class="stp done"><b>1 &middot; Check the draft</b>Done</div>
+        <div class="stp on"><b>2 &middot; Create</b>In QuickBooks</div>
+        <div class="stp"><b>3 &middot; Send</b>To the customer</div>
+      </div>
+
+      <div class="reqlist">
+        <div class="reqr ok"><span class="mk">&check;</span><span>No other invoice for this contract covers 1 &ndash; 30 September 2026.</span></div>
+        <div class="reqr ok"><span class="mk">&check;</span><span>QuickBooks holds no other open invoice to Amrize that refers to this period.</span></div>
+        <div class="reqr ok"><span class="mk">&check;</span><span>The purchase order number required by this account has been entered.</span></div>
+      </div>
+
+      <div class="quietbox info" style="margin-top:12px">The invoice is created in QuickBooks, but creating it does not send it. It can still be checked, corrected and, if need be, voided from the next screen before anything reaches the customer.</div>
+
+      <div class="sheet-actions">
+        <button class="btn btn-ghost" type="button">Back to the draft</button>
+        <button class="btn btn-green" type="button">Create the invoice</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="ledesub" style="margin:0 0 8px"><b>Step 3 &mdash; review what was created, then send.</b></p>
+  <div class="scrim">
+    <div class="sheet">
+      <h3 class="sheet-title">Invoice 7112 &mdash; Amrize</h3>
+      <p class="sheet-lede">This is a fresh reading of the invoice as QuickBooks holds it, not a copy of the draft. Checking it here is the last step before it reaches the customer.</p>
+
+      <div class="steps">
+        <div class="stp done"><b>1 &middot; Check the draft</b>Done</div>
+        <div class="stp done"><b>2 &middot; Create</b>Created 15 Oct 2026</div>
+        <div class="stp on"><b>3 &middot; Send</b>To the customer</div>
+      </div>
+
+      <div class="qbcard">
+        <div class="lnmain"><span class="lnname">As QuickBooks holds it</span><a class="lnk" href="#" style="margin-left:auto">Open in QuickBooks</a></div>
+        <div class="facts">
+          <div class="fact"><span class="fact-k">Invoice number</span><span class="fact-v">7112</span></div>
+          <div class="fact"><span class="fact-k">Customer</span><span class="fact-v">Amrize</span></div>
+          <div class="fact"><span class="fact-k">Date</span><span class="fact-v">15 October 2026</span></div>
+          <div class="fact"><span class="fact-k">Payment terms</span><span class="fact-v">Net 30, due 14 November 2026</span></div>
+          <div class="fact"><span class="fact-k">Purchase order</span><span class="fact-v">4500219877</span></div>
+          <div class="fact"><span class="fact-k">Total</span><span class="fact-v">$6,056.43</span></div>
+          <div class="fact"><span class="fact-k">Balance</span><span class="fact-v">$6,056.43</span></div>
+          <div class="fact"><span class="fact-k">Lines</span><span class="fact-v">Grounds maintenance $4,771.43; Fall clean-up $1,285.00</span></div>
+        </div>
+      </div>
+
+      <div class="blockcard">
+        <h4>Lines &mdash; edit here if anything is wrong</h4>
+        <div class="eln">
+          <label class="ctl ctl-grow"><span class="ctl-lab">Description</span><input type="text" value="Grounds maintenance &mdash; September 2026"></label>
+          <label class="ctl"><span class="ctl-lab">Amount</span><input type="text" value="4,771.43" style="min-width:120px"></label>
+          <a class="lnk rm" href="#">Remove</a>
+        </div>
+        <div class="eln">
+          <label class="ctl ctl-grow"><span class="ctl-lab">Description</span><input type="text" value="Fall clean-up"></label>
+          <label class="ctl"><span class="ctl-lab">Amount</span><input type="text" value="1,285.00" style="min-width:120px"></label>
+          <a class="lnk rm" href="#">Remove</a>
+        </div>
+        <div class="actions"><button class="btn btn-ghost btn-sm" type="button">Add a line</button></div>
+        <p class="drsub" style="margin-top:10px">Changes made here are saved to the invoice in QuickBooks. Sending saves anything outstanding first, so the customer always receives what is on this screen. If someone has edited the invoice in QuickBooks since this page read it, the differences are shown and nothing is overwritten without a decision.</p>
+      </div>
+
+      <div class="blockcard">
+        <h4>Before this is sent</h4>
+        <div class="reqlist" style="margin-top:0">
+          <div class="reqr ok"><span class="mk">&check;</span><span>Purchase order 4500219877 is on the invoice, as this account requires.</span></div>
+          <div class="reqr att"><span class="mk">&#9679;</span><span>This account also files compliance information through the Avetta portal once a year. Nothing is needed there for this invoice.</span></div>
+          <div class="reqr ok"><span class="mk">&check;</span><span>Payment is expected 30 days after the invoice date.</span></div>
+        </div>
+      </div>
+
+      <div class="blockcard">
+        <h4>Who it goes to</h4>
+        <div class="recip">
+          <div class="rcr"><span class="who">Accounts payable</span><span class="adr">accountspayable@amrize.com</span><a class="lnk rm" href="#">Remove</a></div>
+          <div class="rcr"><span class="who">Adam</span><span class="adr">adam@amrize.com</span><a class="lnk rm" href="#">Remove</a></div>
+        </div>
+        <div class="ctlrow" style="margin-top:10px">
+          <label class="ctl ctl-grow"><span class="ctl-lab">Add another address</span><input type="text" placeholder="name@company.com"></label>
+        </div>
+        <p class="drsub" style="margin-top:8px">The invoice is emailed to each address in turn, one message per address. Addresses added here are used for this send only and do not change the customer record in QuickBooks.</p>
+      </div>
+
+      <div class="conseq">Sending emails invoice 7112 to 2 addresses. An email cannot be recalled once it has gone out.</div>
+
+      <div class="sheet-actions" style="justify-content:space-between">
+        <button class="btn btn-ghost" type="button">Void this invoice</button>
+        <span>
+          <button class="btn btn-ghost" type="button">Not now</button>
+          <button class="btn btn-ghost" type="button">Save changes</button>
+          <button class="btn btn-green" type="button">Send the invoice</button>
+        </span>
+      </div>
+      <p class="drsub" style="margin-top:10px">Voiding asks for confirmation first. A voided invoice stays in QuickBooks with a zero balance and the period reopens, so the contract can be drafted again.</p>
+    </div>
+  </div>
+
+  <p class="ledesub" style="margin:26px 0 8px"><b>If someone edited the invoice in QuickBooks first.</b></p>
+  <div class="scrim">
+    <div class="sheet">
+      <h3 class="sheet-title">This invoice has changed in QuickBooks</h3>
+      <p class="sheet-lede">Invoice 7112 was edited in QuickBooks after this page read it, so your changes have not been saved yet. Nothing has been overwritten. Below is what differs, so the right version can be chosen deliberately.</p>
+
+      <table class="diff" style="margin-top:14px">
+        <thead><tr><th>Line</th><th>On this screen</th><th>In QuickBooks now</th></tr></thead>
+        <tbody>
+          <tr><td>Grounds maintenance &mdash; September 2026</td><td class="was money">$4,771.43</td><td class="now money">$4,771.43</td></tr>
+          <tr><td>Fall clean-up</td><td class="was money">$1,285.00</td><td class="now money">$1,185.00</td></tr>
+          <tr><td><b>Total</b></td><td class="was money">$6,056.43</td><td class="now money">$5,956.43</td></tr>
+        </tbody>
+      </table>
+
+      <div class="quietbox" style="margin-top:14px">Keeping the QuickBooks version reloads this screen with those figures and loses the changes made here. Keeping this screen&rsquo;s version replaces the QuickBooks invoice with what is shown above, including the differences.</div>
+
+      <div class="sheet-actions">
+        <button class="btn btn-ghost" type="button">Cancel</button>
+        <button class="btn btn-ghost" type="button">Keep the QuickBooks version</button>
+        <button class="btn btn-amber" type="button">Keep this screen&rsquo;s version</button>
+      </div>
+    </div>
+  </div>
+
+  <p class="ledesub" style="margin:26px 0 8px"><b>If the invoice is changed after it has already been sent.</b></p>
+  <div class="scrim">
+    <div class="sheet">
+      <h3 class="sheet-title">Invoice 7112 &mdash; Amrize <span class="chip chip-signed">Sent 15 October 2026</span></h3>
+      <p class="sheet-lede">This invoice has been emailed to the customer. It can still be changed here, and the change is saved to the invoice in QuickBooks &mdash; but the copy the customer is holding does not change with it.</p>
+
+      <div class="steps">
+        <div class="stp done"><b>1 &middot; Check the draft</b>Done</div>
+        <div class="stp done"><b>2 &middot; Create</b>Created 15 Oct 2026</div>
+        <div class="stp done"><b>3 &middot; Send</b>Sent 15 Oct 2026 to 2 addresses</div>
+      </div>
+
+      <div class="alertbar">
+        <b>The customer has an older version of this invoice.</b>
+        Amrize was sent the invoice on 15 October 2026, for $6,056.43. Since then a hand-weeding line of $810.00 has been added, so the invoice now stands at $6,866.43. The customer has not been told about that change and will not see it until the invoice is sent again.
+      </div>
+
+      <table class="diff" style="margin-top:14px">
+        <thead><tr><th>Line</th><th>Sent to the customer</th><th>On the invoice now</th></tr></thead>
+        <tbody>
+          <tr><td>Grounds maintenance &mdash; September 2026</td><td class="was money">$4,771.43</td><td class="now money">$4,771.43</td></tr>
+          <tr><td>Fall clean-up</td><td class="was money">$1,285.00</td><td class="now money">$1,285.00</td></tr>
+          <tr><td>Hand weeding &mdash; 6.0 hours at $135.00</td><td class="was money">Not on the sent invoice</td><td class="now money">$810.00</td></tr>
+          <tr><td><b>Total</b></td><td class="was money">$6,056.43</td><td class="now money">$6,866.43</td></tr>
+        </tbody>
+      </table>
+
+      <p class="drsub" style="margin-top:10px">The rate for hand weeding was confirmed at $135.00 per man-hour and added to the contract, which is why this line can now be priced. It will be priced automatically on future invoices.</p>
+
+      <div class="quietbox warn" style="margin-top:12px">Until this invoice is sent again, the books and the customer&rsquo;s copy disagree, and the customer will pay against the figure they were sent. Sending it again emails the current version to the same addresses; the earlier email cannot be recalled, so the customer receives two invoices carrying the same number and should be told which one stands.</div>
+
+      <div class="sheet-actions">
+        <button class="btn btn-ghost" type="button">Leave it for now</button>
+        <button class="btn btn-green" type="button">Send the updated invoice</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</section>
+
+<!-- ══════════════════ STATE 7 — VIEW ONLY ══════════════════ -->
+<section class="mstate" id="s7" data-cap="State 7 — the same page for someone who can read contracts but does not carry out invoicing or contract changes. Nothing is hidden: the amounts, the statuses and the reasons a contract needs attention all read the same. What is absent is the controls that act. Compare with state 1.">
+<div class="frame">
+
+  <div class="navbar"><span>Dashboard</span><span>Pipeline</span><span>Projects</span><span class="on">Contracts</span><span>Timeclock</span><span>Watch</span><span>Data</span></div>
+
+  <p class="cmplab">The same row, side by side</p>
+  <div class="cmp">
+    <div>
+      <p class="cmplab">With invoicing and contract changes</p>
+      <div class="drow is-late" style="margin:0">
+        <div class="drhead"><span class="drname">Heritage Homes &mdash; Snow</span><span class="chip chip-expired">Paper expired</span><span class="grow"></span><span class="dramt">$6,280.00</span></div>
+        <div class="drmeta">November 2026<span class="sep">&middot;</span>Flat monthly<span class="sep">&middot;</span>Due 1 October 2026, 14 days ago</div>
+        <div class="dract"><button class="btn btn-green btn-sm" type="button">Review and send</button><a class="lnk" href="#">Open contract</a><a class="lnk" href="#">Renew this contract</a></div>
+      </div>
+    </div>
+    <div>
+      <p class="cmplab">View only</p>
+      <div class="drow is-late" style="margin:0">
+        <div class="drhead"><span class="drname">Heritage Homes &mdash; Snow</span><span class="chip chip-expired">Paper expired</span><span class="grow"></span><span class="dramt">$6,280.00</span></div>
+        <div class="drmeta">November 2026<span class="sep">&middot;</span>Flat monthly<span class="sep">&middot;</span>Due 1 October 2026, 14 days ago</div>
+        <div class="dract"><a class="lnk" href="#">Open contract</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pagehead"><h1>Contracts</h1><span class="when">Thursday 15 October 2026</span></div>
+
+  <p class="lede">Every recurring agreement A-Plus holds is recorded here, and the page follows the work in the order it happens: <strong>invoices that are due are drafted first, contracts that have lapsed or are ending soon are renewed next, and the full register sits below both.</strong></p>
+  <p class="ledesub">You have read access to contracts. Drafting and sending invoices, and making changes to a contract, are carried out by the office; those controls are not shown on your view of this page.</p>
+
+  <div class="strip">
+    <button class="seg action" type="button"><span class="n">10</span><span class="t">Due to invoice</span><span class="sub">$18,985.13 assembled</span></button>
+    <button class="seg" type="button"><span class="n">4</span><span class="t">Renewals</span><span class="sub">2 lapsed, 2 ending soon</span></button>
+    <button class="seg ref" type="button"><span class="n">27</span><span class="t">All contracts</span><span class="sub">across 19 accounts</span></button>
+  </div>
+  <div class="worklists">
+    <button class="wl" type="button">Needs attention <span class="b">6</span><span class="hbtn" data-tip="Contracts that cannot be drafted as they stand, or whose terms disagree: three carry no charge on file, one has visits recorded at a location that is not linked to it, one has a visit that has not been matched to either the contract or a project at the same site, and one has two contracts describing the same terms.">?</span></button>
+    <button class="wl" type="button">Figures to confirm <span class="b quiet">8</span><span class="hbtn" data-tip="Contracts carrying a figure taken from the office contract spreadsheet that has not yet been checked against a signed document. They are still used to assemble invoices, and the review screen says so before anything is created.">?</span></button>
+  </div>
+
+  <div class="stephead"><span class="stepnum">Step 1</span><h2>Due to invoice</h2></div>
+  <p class="steplede">Recurring invoices whose period has closed, oldest first. Each entry shows the amount assembled from the contract&rsquo;s terms and the work recorded against it.</p>
+
+  <div class="drow is-late">
+    <div class="drhead"><span class="drname">Liberty Square &mdash; Grounds</span><span class="chip chip-active">Active</span><span class="chip chip-quiet">Tax exempt</span><span class="grow"></span><span class="dramt">$1,630.00</span></div>
+    <div class="drmeta">September 2026<span class="sep">&middot;</span>Billed for each service<span class="sep">&middot;</span>Due 30 September 2026, 15 days ago</div>
+    <div class="drnote">Four mowing visits at $260.00 each, and one fertiliser application by the sub-contractor at $590.00, which is charged on as it is carried out.</div>
+    <div class="dract"><a class="lnk" href="#">Open contract</a></div>
+  </div>
+
+  <div class="drow is-stop">
+    <div class="drhead"><span class="drname">Kwik Trip &mdash; Grounds</span><span class="chip chip-active">Active</span><span class="chip chip-stop">Location not linked</span><span class="grow"></span><span class="dramt">$555.00</span></div>
+    <div class="drmeta">1 &ndash; 30 September 2026<span class="sep">&middot;</span>Billed for each service<span class="sep">&middot;</span>Due 1 October 2026, 14 days ago</div>
+    <div class="drnote stop">Two visits in this period were recorded at a Kwik Trip location that is not linked to this contract, so they are not on the draft and are not in the amount above.</div>
+    <div class="dract"><a class="lnk" href="#">Open contract</a></div>
+  </div>
+
+  <div class="drow is-quiet">
+    <div class="drhead"><span class="drname">Ironwood &mdash; Snow</span><span class="chip chip-active">Active</span><span class="grow"></span><span class="dramt none">Nothing to bill</span></div>
+    <div class="drmeta">1 &ndash; 30 September 2026<span class="sep">&middot;</span>Billed for each service<span class="sep">&middot;</span>Period ended 30 September 2026</div>
+    <div class="drnote">No billable work was recorded against this contract during the period, which is expected for a snow contract in September.</div>
+    <div class="dract"><a class="lnk" href="#">Open contract</a></div>
+  </div>
+
+  <p class="ledesub" style="margin-top:16px">The register below reads in full, and every contract can be opened. Editing a contract, changing its status, attaching a document and creating an invoice are carried out by the office.</p>
+
+</div>
+</section>
+
+<!-- ══════════════════ STATE 8 — THE CLIENT PANEL ══════════════════ -->
+<section class="mstate" id="s8" data-cap="State 8 — the contracts panel on an existing client page. It lists the account's contracts and links across, and it carries the two things that belong to the account rather than to any one contract: the standing facts, which survive a contract being replaced, and the effective terms, which are worked out from the contracts above and refreshed each night.">
+<div class="frame">
+
+  <div class="navbar"><span>Dashboard</span><span>Pipeline</span><span>Projects</span><span>Contracts</span><span>Timeclock</span><span>Watch</span><span class="on">Data</span></div>
+
+  <p class="crumb"><a href="#">Clients</a> &rsaquo; Heritage Homes</p>
+
+  <div class="entcard">
+    <div class="enthead">
+      <div>
+        <div class="cust">Heritage Homes</div>
+        <p class="propline" style="margin:2px 0 0;font-size:14px;color:#3a4a3c">6300 Nesbitt Road, DeForest, WI<span class="sep" style="color:#9aa79b;margin:0 7px">&middot;</span>1 site</p>
+      </div>
+      <div class="chiprow">
+        <span class="chip chip-active">Active</span>
+        <span class="chip chip-quiet">Managed by Madison Property</span>
+      </div>
+    </div>
+    <div class="facts">
+      <div class="fact"><span class="fact-k">Sites</span><span class="fact-v">1 active</span></div>
+      <div class="fact"><span class="fact-k">Routes</span><span class="fact-v">DeForest Snow, DeForest Lawn</span></div>
+      <div class="fact"><span class="fact-k">Contracts</span><span class="fact-v">2 on file</span></div>
+      <div class="fact"><span class="fact-k">Customer in QuickBooks</span><span class="fact-v">Linked</span></div>
+    </div>
+  </div>
+
+  <!-- the new panel -->
+  <div class="entcard">
+    <div class="enthead">
+      <div class="cust" style="font-size:15px">Contracts</div>
+      <a class="lnk" href="#">Open the contracts page</a>
+    </div>
+    <p class="drsub" style="margin:2px 0 12px">This account holds more than one contract at a time, which is normal: lawn and snow are agreed separately.</p>
+
+    <div class="drow is-ready" style="margin-bottom:10px">
+      <div class="drhead">
+        <span class="drname" style="font-size:14px">Lawn</span>
+        <span class="chip chip-active">Active</span>
+        <span class="grow"></span>
+        <span class="dramt" style="font-size:14px">$1,701.14 / month</span>
+      </div>
+      <div class="drmeta">1 April 2024 &ndash; 1 October 2027<span class="sep">&middot;</span>Signed contract<span class="sep">&middot;</span>Seven instalments<span class="sep">&middot;</span>Next invoice 1 November 2026</div>
+      <div class="dract"><a class="lnk" href="#">Open contract</a></div>
+    </div>
+
+    <div class="drow is-late" style="margin-bottom:0">
+      <div class="drhead">
+        <span class="drname" style="font-size:14px">Snow</span>
+        <span class="chip chip-expired">Expired</span>
+        <span class="chip chip-warn">Still being serviced</span>
+        <span class="grow"></span>
+        <span class="dramt" style="font-size:14px">$6,280.00 / month</span>
+      </div>
+      <div class="drmeta">1 March 2023 &ndash; 1 March 2026<span class="sep">&middot;</span>Signed contract<span class="sep">&middot;</span>Five instalments<span class="sep">&middot;</span>Invoice overdue since 1 October 2026</div>
+      <div class="dract"><a class="lnk" href="#">Open contract</a><a class="lnk" href="#">Renew</a></div>
+    </div>
+  </div>
+
+  <div class="entcard">
+    <div class="cust" style="font-size:15px">Standing account facts</div>
+    <p class="drsub" style="margin:2px 0 10px">These belong to the account rather than to any one contract, so they stay in place when a contract is renewed or replaced.</p>
+    <div class="frow"><span class="fk">Billing address</span><span class="fv">Accounts payable at Madison Property, with Peter Jones copied</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Payment behaviour</span><span class="fv">The management company pays late; chase from a week after the due date</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Sales tax</span><span class="fv">Taxable</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Billed through a portal</span><span class="fv">No</span><span class="prov office">Office</span></div>
+    <div class="frow"><span class="fk">Accounts billed inside this one</span><span class="fv">None</span><span class="prov office">Office</span></div>
+    <div class="actions"><button class="btn btn-ghost btn-sm" type="button">Edit standing facts</button></div>
+  </div>
+
+  <div class="entcard">
+    <div class="cust" style="font-size:15px">Effective terms</div>
+    <p class="drsub" style="margin:2px 0 10px">Worked out from the contracts above. Last refreshed today at 3:10 am. These are read here and changed on the contract they come from.</p>
+    <div class="frow"><span class="fk">Charged</span><span class="fv">Flat monthly on both contracts</span></div>
+    <div class="frow"><span class="fk">Invoiced</span><span class="fv">On the 1st, for the month ahead</span></div>
+    <div class="frow"><span class="fk">Payment terms</span><span class="fv">Net 30</span></div>
+    <div class="frow"><span class="fk">Annual increase</span><span class="fv">None recorded on either contract</span></div>
+    <div class="frow"><span class="fk">Seasonal snow cap, floor and credit</span><span class="fv">Not recorded. Until the snow contract carries them, this account&rsquo;s position at the end of the season is shown rather than calculated.</span></div>
+    <div class="frow"><span class="fk">Sub-contracted work</span><span class="fv">Five fertiliser applications a season, inside the seasonal price</span></div>
+  </div>
+
+  <div class="quietbox">A contract on this account has lapsed while the account is still being serviced. It is listed under Renewals on the contracts page, and its invoice is still being drafted as usual.</div>
+
+</div>
+</section>
+
+<script>
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".mock-tab"));
+  var states = Array.prototype.slice.call(document.querySelectorAll(".mstate"));
+  var cap = document.getElementById("cap");
+  function show(id) {
+    states.forEach(function (s) { s.classList.toggle("is-on", s.id === id); });
+    tabs.forEach(function (t) { t.classList.toggle("is-on", t.getAttribute("data-s") === id); });
+    var st = document.getElementById(id);
+    cap.textContent = st ? (st.getAttribute("data-cap") || "") : "";
+    window.scrollTo(0, 0);
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t.getAttribute("data-s")); }); });
+  var vd = document.getElementById("vw-desk"), vp = document.getElementById("vw-phone");
+  vd.addEventListener("click", function () { document.body.classList.remove("phone"); vd.classList.add("is-on"); vp.classList.remove("is-on"); });
+  vp.addEventListener("click", function () { document.body.classList.add("phone"); vp.classList.add("is-on"); vd.classList.remove("is-on"); });
+  show("s1");
+</script>
+</body>
+</html>
