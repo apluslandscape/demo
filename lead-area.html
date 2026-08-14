@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lead area - mockup</title>
+<!--
+  docs/mockups/lead-area.html - clickable mockup of the lead area.
+  Authority: docs/slices/lead-area-design-gate.md (sections 0-9).
+  All person-facing copy below was proposed in chat and blessed by Mike
+  (Aug 14 2026) or transcribed verbatim from the gate's section 9.1
+  blessed inventory. Standalone file - no product imports, no server
+  template; the page.js ES5 constraint does not apply here.
+  Illustrative sample data only; fictional people.
+-->
+<style>
+  :root {
+    --ink: #16211b; --ink-soft: #46544b; --ink-mute: #8a978d;
+    --paper: #f5f3ec; --surface: #ffffff;
+    --line: #e4e0d5; --line-soft: #efece3;
+    --green: #2e6b43; --green-deep: #1f4d30; --green-brt: #46a05f;
+    --green-wash: #e9f1ea; --danger: #b3422f;
+    --radius: 13px; --radius-sm: 9px; --tap: 52px; --maxw: 480px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #f1f4f1; color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px; line-height: 1.45;
+  }
+  a { color: var(--green); }
+
+  /* -- Mockup-only chrome ------------------------------------------------ */
+  .mocknote {
+    background: #223528; color: #cfe0d3; font-size: 11.5px;
+    padding: 7px 14px; text-align: center; line-height: 1.5;
+  }
+  .mocknote button {
+    font: inherit; background: none; border: none; color: #9ecfab;
+    text-decoration: underline; cursor: pointer; padding: 0; margin-left: 6px;
+  }
+
+  /* -- App frame --------------------------------------------------------- */
+  .wrap { display: flex; justify-content: center; align-items: flex-start; }
+  .app {
+    width: 100%; max-width: var(--maxw); background: var(--paper);
+    min-height: calc(100vh - 32px); padding-bottom: 40px; position: relative;
+  }
+  @media (min-width: 520px) {
+    .app { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  }
+
+  /* -- Page head + segmented control ------------------------------------- */
+  .pagehead {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 12px 14px 4px;
+  }
+  .brand {
+    font-size: 11px; font-weight: 800; letter-spacing: .6px;
+    text-transform: uppercase; color: var(--ink-mute);
+  }
+  .seg {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px;
+    background: #e9e6dc; border-radius: var(--radius); padding: 4px;
+    margin: 8px 14px 14px;
+  }
+  .seg button {
+    font: inherit; font-size: 13px; font-weight: 700; color: var(--ink-soft);
+    background: none; border: none; border-radius: var(--radius-sm);
+    min-height: 40px; cursor: pointer; position: relative;
+  }
+  .seg button.on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(22,33,27,.08); }
+  .seg .segbadge {
+    display: inline-block; min-width: 17px; padding: 1px 5px; margin-left: 5px;
+    background: var(--green); color: #fff; border-radius: 999px;
+    font-size: 10.5px; font-weight: 800; line-height: 1.45;
+  }
+
+  /* -- Buttons ----------------------------------------------------------- */
+  .btn {
+    font: inherit; border: none; border-radius: var(--radius-sm);
+    padding: 9px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 38px;
+  }
+  .btn svg { width: 14px; height: 14px; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-green:active { background: var(--green-deep); }
+  .btn-ghost { background: var(--surface); color: var(--green); border: 1px solid var(--line); }
+  .btn-wide { width: 100%; min-height: var(--tap); font-size: 14px; }
+  .btn[disabled] { opacity: .45; cursor: default; }
+
+  /* -- Ledes + explainer ------------------------------------------------- */
+  .lede, .ledesub, .viewlede {
+    margin: 0 14px 10px; font-size: 13px; color: var(--ink-soft); line-height: 1.55;
+  }
+  .ledesub, .viewlede { color: var(--ink-mute); font-size: 12.5px; }
+  .howto {
+    margin: 4px 14px 16px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius);
+  }
+  .howto summary {
+    list-style: none; cursor: pointer; min-height: var(--tap);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 14px; font-size: 13.5px; font-weight: 700; color: var(--green-deep);
+  }
+  .howto summary::-webkit-details-marker { display: none; }
+  .howto summary::after { content: "+"; font-size: 18px; color: var(--ink-mute); font-weight: 400; }
+  .howto[open] summary::after { content: "\2212"; }
+  .howto .howbody { padding: 0 14px 14px; border-top: 1px solid var(--line-soft); }
+  .howto h4 {
+    margin: 14px 0 4px; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--green-deep); font-weight: 800;
+  }
+  .howto p { margin: 0 0 8px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.6; }
+  .howto .gl { margin: 0 0 5px; }
+  .howto .gl b { color: var(--ink); font-weight: 700; }
+
+  /* -- Stacks + rows ------------------------------------------------------ */
+  .stack { margin: 0 14px 18px; }
+  .stackhead {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 6px 2px; margin-bottom: 6px;
+  }
+  .stackhead h2 { margin: 0; font-size: 14.5px; letter-spacing: -.1px; color: var(--ink); }
+  .stackhead .count { font-size: 12.5px; font-weight: 700; color: var(--ink-mute); }
+  .stack.review .stackhead {
+    background: var(--green-wash); border: 1px solid #d8e6da;
+    border-radius: var(--radius-sm); padding: 8px 12px;
+  }
+  .stack.review .stackhead h2 { color: var(--green-deep); }
+  .rows { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .lrow {
+    display: block; width: 100%; text-align: left; font: inherit; color: inherit;
+    background: none; border: none; border-top: 1px solid var(--line-soft);
+    padding: 10px 14px; min-height: var(--tap); cursor: pointer;
+  }
+  .lrow:first-child { border-top: none; }
+  .lrow:active { background: #fbfaf6; }
+  .l1 { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .lname { font-size: 15px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 7px; min-width: 0; }
+  .lname span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ldays { font-size: 12.5px; color: var(--ink-mute); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .l2 { margin-top: 2px; font-size: 12.5px; color: var(--ink-soft); }
+  .dot {
+    width: 8px; height: 8px; border-radius: 999px; background: var(--green-brt);
+    flex: 0 0 auto;
+  }
+
+  /* -- Empty states ------------------------------------------------------- */
+  .empty {
+    background: var(--surface); border: 1px dashed var(--line);
+    border-radius: var(--radius); padding: 14px; margin: 0;
+  }
+  .empty p { margin: 0; font-size: 12.5px; color: var(--ink-mute); line-height: 1.55; }
+
+  /* -- Record view -------------------------------------------------------- */
+  .counts {
+    margin: 0 14px 16px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 10px 8px 12px;
+  }
+  .counts .cap {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--ink-mute); font-weight: 800; text-align: center; margin-bottom: 6px;
+  }
+  .counts .grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .counts button {
+    font: inherit; background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 1px;
+    min-height: var(--tap); justify-content: center; border-radius: var(--radius-sm);
+  }
+  .counts button:active { background: var(--green-wash); }
+  .counts .n { font-size: 19px; font-weight: 800; color: var(--green-deep); font-variant-numeric: tabular-nums; }
+  .counts .lbl { font-size: 11px; color: var(--ink-soft); font-weight: 650; }
+
+  /* -- My tasks ----------------------------------------------------------- */
+  .trow {
+    display: flex; gap: 11px; align-items: flex-start;
+    padding: 11px 14px; border-top: 1px solid var(--line-soft); min-height: var(--tap);
+  }
+  .trow:first-child { border-top: none; }
+  .trow.done .tmain { opacity: .45; text-decoration: line-through; }
+  .tickbox {
+    flex: 0 0 auto; width: 24px; height: 24px; margin-top: 1px;
+    border: 2px solid var(--line); border-radius: 999px; background: var(--surface);
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 13px; padding: 0;
+  }
+  .trow.done .tickbox { background: var(--green); border-color: var(--green); }
+  .tmain { flex: 1 1 auto; min-width: 0; }
+  .tline1 { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .ttext { font-size: 13.5px; font-weight: 650; color: var(--ink); }
+  .tdue { font-size: 12px; color: var(--ink-mute); white-space: nowrap; }
+  .trow.overdue .tdue { color: var(--danger); font-weight: 700; }
+  .tsub { font-size: 12px; color: var(--ink-mute); margin-top: 1px; }
+
+  /* -- Panel -------------------------------------------------------------- */
+  #panel {
+    position: fixed; inset: 0; z-index: 40; background: var(--paper);
+    transform: translateX(102%); transition: transform .22s ease;
+    display: flex; flex-direction: column; max-width: var(--maxw);
+    margin: 0 auto; box-shadow: 0 0 30px rgba(22,33,27,.18);
+  }
+  #panel.open { transform: translateX(0); }
+  .pscroll { flex: 1 1 auto; overflow-y: auto; padding-bottom: 90px; }
+  .phead { background: var(--surface); border-bottom: 1px solid var(--line); padding: 10px 14px 12px; }
+  .phead .row1 { display: flex; align-items: center; gap: 8px; }
+  .backbtn {
+    font: inherit; background: none; border: none; cursor: pointer;
+    color: var(--green-deep); font-size: 20px; line-height: 1;
+    width: 40px; height: 40px; margin-left: -10px; border-radius: 999px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .phead h2 { margin: 0; font-size: 18px; letter-spacing: -.2px; }
+  .situ { margin-top: 3px; font-size: 13px; font-weight: 650; color: var(--green-deep); }
+  .facts { margin-top: 3px; font-size: 12px; color: var(--ink-mute); }
+  .contact { margin-top: 7px; font-size: 13px; display: flex; gap: 14px; flex-wrap: wrap; }
+  .contact a { text-decoration: none; font-weight: 650; padding: 3px 0; }
+
+  .psec { margin: 14px 14px 0; }
+  .psec h3 {
+    margin: 0 0 6px; font-size: 11px; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--ink-mute); font-weight: 800;
+  }
+  .needs { background: var(--green-wash); border: 1px solid #d8e6da; border-radius: var(--radius); overflow: hidden; }
+  .needs .trow { border-top-color: #dde9df; background: none; }
+
+  /* -- Story -------------------------------------------------------------- */
+  .story { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .sentry { border-top: 1px solid var(--line-soft); }
+  .sentry:first-child { border-top: none; }
+  .shead {
+    display: block; width: 100%; text-align: left; font: inherit; color: inherit;
+    background: none; border: none; cursor: pointer; padding: 10px 14px; min-height: var(--tap);
+  }
+  .sentry.unread .shead { background: #f4f8f4; }
+  .s1 { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .stype { font-size: 13px; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 7px; }
+  .swhen { font-size: 11.5px; color: var(--ink-mute); white-space: nowrap; }
+  .s2 {
+    margin-top: 2px; font-size: 12.5px; color: var(--ink-soft);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .s2 b { font-weight: 650; color: var(--ink); }
+  .sbody { display: none; padding: 0 14px 12px; }
+  .sentry.openx .sbody { display: block; }
+  .sentry.openx .s2 { display: none; }
+  .sbody .full { font-size: 13px; color: var(--ink-soft); line-height: 1.55; margin: 2px 0 0; white-space: pre-wrap; }
+  .sbody .who { font-size: 12px; color: var(--ink-mute); margin-bottom: 3px; }
+  .cmt {
+    margin-top: 8px; padding: 7px 10px; border-left: 3px solid var(--line);
+    background: #fbfaf6; border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 12.5px; color: var(--ink-soft);
+  }
+  .cmt b { color: var(--ink); }
+  .srowbtns { margin-top: 9px; }
+
+  /* -- Action bar --------------------------------------------------------- */
+  .actionbar {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    background: var(--surface); border-top: 1px solid var(--line);
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  }
+  .abtn {
+    font: inherit; background: none; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    min-height: var(--tap); justify-content: center; border-radius: var(--radius-sm);
+    font-size: 11px; font-weight: 700; color: var(--green-deep); padding: 4px 2px;
+  }
+  .abtn:active { background: var(--green-wash); }
+  .abtn svg { width: 19px; height: 19px; }
+  .abtn.primary { background: var(--green); color: #fff; }
+  .actionbar.single { grid-template-columns: 1fr; padding: 10px 14px calc(10px + env(safe-area-inset-bottom)); }
+
+  /* -- Sheets ------------------------------------------------------------- */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(22,33,27,.45); z-index: 60;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .sheet {
+    width: min(432px, 100%); background: var(--surface);
+    border-radius: 16px 16px 0 0; max-height: 88vh; overflow-y: auto;
+    padding: 14px 16px calc(18px + env(safe-area-inset-bottom));
+  }
+  .sheet-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+  .sheet-title { margin: 0; font-size: 16.5px; letter-spacing: -.2px; }
+  .sheet-sub { margin: 2px 0 12px; font-size: 12.5px; color: var(--ink-mute); line-height: 1.5; }
+  .xbtn {
+    font: inherit; background: none; border: none; cursor: pointer; color: var(--ink-mute);
+    font-size: 20px; line-height: 1; width: 36px; height: 36px; margin: -6px -8px 0 0;
+    border-radius: 999px;
+  }
+  .flabel { font-size: 11px; text-transform: uppercase; letter-spacing: .45px; color: var(--ink-mute); font-weight: 800; margin: 13px 0 5px; }
+  .fnote { font-size: 12px; color: var(--ink-mute); line-height: 1.5; margin: 6px 0 0; }
+  .ctl {
+    width: 100%; font: inherit; font-size: 14px; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); padding: 11px 12px; min-height: 44px;
+  }
+  textarea.ctl { min-height: 84px; resize: vertical; }
+  .opts { display: grid; gap: 6px; }
+  .opts.two { grid-template-columns: 1fr 1fr; }
+  .opt {
+    font: inherit; font-size: 13.5px; font-weight: 650; color: var(--ink-soft);
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); min-height: 46px; cursor: pointer;
+    padding: 8px 10px; text-align: center;
+  }
+  .opt.on { border-color: var(--green); color: var(--green-deep); background: var(--green-wash); box-shadow: inset 0 0 0 1px var(--green); }
+  .grouphead { font-size: 11px; text-transform: uppercase; letter-spacing: .45px; color: var(--green-deep); font-weight: 800; margin: 14px 0 6px; }
+  .confirmline {
+    margin: 14px 0 0; padding: 10px 12px; background: var(--green-wash);
+    border: 1px solid #d8e6da; border-radius: var(--radius-sm);
+    font-size: 12.5px; color: var(--ink-soft); line-height: 1.5;
+  }
+  .notice {
+    margin: 10px 0 0; padding: 10px 12px; background: #fdf6ec;
+    border: 1px solid #ecdcc0; border-radius: var(--radius-sm);
+    font-size: 12.5px; color: #6b5320; line-height: 1.5;
+  }
+  .sheet .btn-wide { margin-top: 16px; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .preset {
+    font: inherit; font-size: 12.5px; font-weight: 650; color: var(--green-deep);
+    background: var(--green-wash); border: 1px solid #d8e6da; border-radius: 999px;
+    padding: 7px 12px; cursor: pointer;
+  }
+  .brk { display: flex; justify-content: space-between; padding: 11px 2px; border-top: 1px solid var(--line-soft); font-size: 13.5px; }
+  .brk:first-of-type { border-top: none; }
+  .brk .n { font-weight: 750; font-variant-numeric: tabular-nums; }
+
+  /* -- Search fields ------------------------------------------------------ */
+  .searchwrap { margin: 0 14px 12px; }
+  input[type="search"].ctl::-webkit-search-cancel-button { -webkit-appearance: none; }
+
+  /* -- Required marks + validation ---------------------------------------- */
+  .req { color: var(--danger); font-weight: 800; margin-right: 2px; }
+  .ctl.invalid { border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+
+  /* -- My tasks sections --------------------------------------------------- */
+  .tsec { margin: 16px 2px 6px; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-mute); font-weight: 800; }
+  .pastwrap { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .pastwrap summary { list-style: none; cursor: pointer; min-height: var(--tap); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .pastwrap summary::-webkit-details-marker { display: none; }
+  .pastwrap summary::after { content: "+"; font-size: 18px; color: var(--ink-mute); font-weight: 400; }
+  .pastwrap[open] summary::after { content: "\2212"; }
+  .pastwrap .rows { border: none; border-radius: 0; border-top: 1px solid var(--line-soft); }
+  .showmore { margin: 10px 14px 14px; }
+
+  /* -- Sheet back + breakdown drill-down ----------------------------------- */
+  .backbtn svg { width: 22px; height: 22px; }
+  .sheet-title { flex: 1 1 auto; }
+  .sheet-head .backbtn { width: 36px; height: 36px; flex: 0 0 auto; margin: -4px 0 0 -10px; }
+  button.brk { width: 100%; font: inherit; background: none; border: none; border-top: 1px solid var(--line-soft); cursor: pointer; color: inherit; text-align: left; }
+  button.brk:first-of-type { border-top: none; }
+  #namerows { margin-top: 8px; }
+
+  /* -- Reply composer ------------------------------------------------------ */
+  .toolbar { display: flex; gap: 5px; margin: 12px 0 6px; }
+  .tbtn { font: inherit; font-size: 13.5px; width: 40px; height: 34px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); cursor: pointer; color: var(--ink-soft); display: inline-flex; align-items: center; justify-content: center; }
+  .tbtn svg { width: 15px; height: 15px; }
+  .rich { min-height: 110px; }
+  .attachrow { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .attachchip { display: inline-flex; align-items: center; gap: 5px; background: var(--green-wash); border: 1px solid #d8e6da; color: var(--green-deep); border-radius: 999px; padding: 5px 10px; font-size: 12px; font-weight: 650; }
+
+  /* -- Wide screens: panel beside the list, shown simply ------------------ */
+  @media (min-width: 1020px) {
+    body.panel-open .wrap { gap: 16px; }
+    body.panel-open .app { margin: 0; }
+    body.panel-open #panel {
+      position: sticky; top: 0; transform: none; transition: none;
+      width: var(--maxw); margin: 0; height: 100vh; box-shadow: none;
+      border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+    }
+  }
+
+  /* -- Empty-state demo mode (mockup-only) -------------------------------- */
+  body.demo-empty .has-data { display: none !important; }
+  body.demo-empty .segbadge { display: none !important; }
+  body:not(.demo-empty) .only-empty { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="mocknote">
+  Clickable mockup &middot; illustrative data only; nothing here is connected to a live system.
+  <button id="emptytoggle" type="button">Show empty states</button>
+</div>
+
+<div class="wrap">
+<div class="app">
+
+  <div class="pagehead">
+    <span class="brand">A-Plus Lawn Care &middot; Lead area</span>
+    <button class="btn btn-green" id="addleadbtn" type="button">Add lead</button>
+  </div>
+
+  <div class="seg" role="tablist">
+    <button type="button" id="seg-leads" class="on">Leads</button>
+    <button type="button" id="seg-record">Record</button>
+    <button type="button" id="seg-tasks">My tasks<span class="segbadge" id="taskbadge">2</span></button>
+  </div>
+
+  <!-- ==================== LEADS VIEW ==================== -->
+  <div id="view-leads">
+    <div class="searchwrap has-data"><input class="ctl" type="search" id="leadsearch" placeholder="Search leads" autocomplete="off"></div>
+    <p class="lede">Every inquiry lives on this page from the moment it arrives until it becomes a paying customer or is given a recorded ending. The three stacks answer one question at a glance: whose move is next. Awaiting Review holds arrivals nobody has looked at yet, Action Required means the next move is ours, and Awaiting Customer means we are waiting on them.</p>
+    <p class="ledesub">The person who has waited longest sits at the top of every stack, so the work always starts at the top. This page never contacts anyone on its own - every reply, logged conversation, and recorded ending is something one of us chose to do - and it keeps itself up to date, so there is never anything to refresh.</p>
+
+    <details class="howto">
+      <summary>How this page works</summary>
+      <div class="howbody">
+        <h4>Why it matters</h4>
+        <p>Every open lead lives on this one screen, whatever door it came in through - a call, a text, an email, Facebook, or a conversation in person. Each row answers the two questions that matter: what is waiting, and for how long. Nothing sits out of view, and nothing leaves the list without a recorded reason.</p>
+
+        <h4>Where to start</h4>
+        <p>When Awaiting Review is showing, start there. It holds inquiries that arrived on their own and have not been looked at yet, and its job is to reach zero. Open each one, read what came in, and place it: answering the person, logging the first call, or scheduling the estimate puts it in the right stack on its own, and Set the status under More covers anything unusual. Then work Action Required from the top - the oldest wait first.</p>
+
+        <h4>The three stacks</h4>
+        <p>A lead's position is its meaning. Action Required means the ball is with us: first contact not yet made, an estimate to schedule, write, or send, or a customer reply waiting on an answer. Awaiting Customer means the ball is with them: we have answered, or the estimate is in their hands, and the days figure shows how long they have been quiet - a row that sits there a while is the signal to nudge, or to record an ending. Awaiting Review appears only when something new has arrived.</p>
+
+        <h4>What each phrase means</h4>
+        <p class="gl"><b>Awaiting initial contact</b> - a new lead nobody has reached out to yet.</p>
+        <p class="gl"><b>Estimate scheduled</b> - a time is set to go look at the work.</p>
+        <p class="gl"><b>Estimate in progress</b> - the estimate is being written and is not finished.</p>
+        <p class="gl"><b>Estimate not sent</b> - the estimate is finished but has never gone out.</p>
+        <p class="gl"><b>Customer reply received</b> - the customer has responded and is awaiting our answer.</p>
+        <p class="gl"><b>Awaiting reply</b> - we made the most recent contact and are awaiting the customer's response.</p>
+        <p class="gl"><b>Estimate sent</b> - the estimate is in the customer's hands, awaiting their decision.</p>
+
+        <h4>What each action does</h4>
+        <p>Tapping a row opens the whole story: every email, logged conversation, note, and estimate event in one timeline, newest first, with unread items marked. From there, Reply sends an email and moves the lead to Awaiting Customer. Log call-text records a conversation that already happened - and because who contacted whom is what moves a lead between stacks, the log is the update: logging that the customer reached us places the lead in Action Required, and logging that we reached them places it in Awaiting Customer. Flag asks Paul, Jen, or Mike to look at something; it lands on that person's task list. Under More: add a note, create a task, set the status, enroll email history, or record an ending.</p>
+
+        <h4>Endings and the record</h4>
+        <p>One ending is automatic: when a deposit is paid, the lead becomes a customer and leaves this list on its own. Every other ending is deliberate: Record an ending files the lead under the Record view with a category and one line of what happened, and nothing about it is final - a finished lead's panel offers Reopen, which returns it to the working list with its whole story intact.</p>
+
+        <h4>The working rhythm</h4>
+        <p>Day to day, conversations go on the record as they happen - a call, a text, or a conversation in person is logged while it is fresh. A couple of times a week, someone walks the whole page top to bottom: Awaiting Review to zero, Action Required oldest first - acting on each row or turning it into a task - then Awaiting Customer oldest first, nudging the quiet ones or recording an ending, and clearing anything unread along the way.</p>
+
+        <h4>What happens on its own - and what does not</h4>
+        <p>Two things happen by themselves: estimate states keep themselves current - writing, finishing, or sending an estimate updates the row without anyone touching it - and a paid deposit converts the lead to a customer. Everything else is a person's deliberate act. This page never emails, texts, or calls a customer on its own, and it never closes a lead on its own. When something new arrives from a customer, the unread marker is the page asking a person to look - not the page acting for them.</p>
+      </div>
+    </details>
+
+    <div id="stacks"></div>
+
+    <div class="empty only-empty" style="margin: 0 14px;">
+      <p>No open leads right now. New inquiries appear here the moment they arrive, and Add lead records one that comes in by phone or in person.</p>
+    </div>
+  </div>
+
+  <!-- ==================== RECORD VIEW ==================== -->
+  <div id="view-record" hidden>
+    <div class="searchwrap has-data"><input class="ctl" type="search" id="recordsearch" placeholder="Search leads" autocomplete="off"></div>
+    <p class="viewlede">Every lead that has reached an ending, newest first - wins, losses, and inquiries turned away alike. Recording an ending closes the lead and preserves its complete history: tapping a row opens the same panel, with the full record of every conversation and event.</p>
+
+    <div class="counts has-data">
+      <div class="cap">This season</div>
+      <div class="grid" id="countsgrid"></div>
+    </div>
+
+    <div class="stack has-data"><div class="rows" id="recordrows"></div></div>
+
+    <div class="empty only-empty" style="margin: 0 14px;">
+      <p>No endings on record yet. When a lead is won, lost, or turned away, it moves here with its whole story.</p>
+    </div>
+  </div>
+
+  <!-- ==================== MY TASKS VIEW ==================== -->
+  <div id="view-tasks" hidden>
+    <p class="viewlede">Tasks and flags concerning leads, one line each - what is needed, who it concerns, and when it is due - with overdue items on top. Each line carries its own done toggle.</p>
+
+    <div class="stack has-data">
+      <div class="rows" id="taskrows"></div>
+      <div class="tsec">Recently completed</div>
+      <div class="rows" id="donerows"></div>
+      <details class="pastwrap" id="pastwrap">
+        <summary>Past tasks</summary>
+        <div class="rows" id="pastrows"></div>
+        <button type="button" class="btn btn-ghost showmore" id="showmore">Show more</button>
+      </details>
+    </div>
+
+    <div class="empty only-empty" style="margin: 0 14px;">
+      <p>Nothing here right now. Flags and tasks concerning leads will appear on this list.</p>
+    </div>
+  </div>
+
+</div><!-- /.app -->
+
+<!-- ==================== PANEL ==================== -->
+<div id="panel" aria-hidden="true">
+  <div class="pscroll">
+    <div class="phead" id="phead"></div>
+    <div id="pbody"></div>
+  </div>
+  <div class="actionbar" id="actionbar"></div>
+</div>
+
+</div><!-- /.wrap -->
+
+<div id="sheetroot"></div>
+
+<script>
+"use strict";
+
+/* ---------- icons (inline SVG, stroke inherits currentColor) ---------- */
+var IC = {
+  reply: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>',
+  log:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+  flag:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>',
+  more:  '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
+  undo:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  send:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>',
+  clip:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>',
+  chev:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+  list:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg>',
+  link:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+};
+
+/* ---------- sample data (fictional people; today = Aug 14) ---------- */
+var LEADS = [
+  { id: "dana", name: "Dana Whitfield", stack: "review", phrase: "", days: 1, unread: true,
+    source: "Facebook", estimate: null, since: "Aug 13", sent: false,
+    phone: "(414) 555-0161", email: "dana.whitfield@example.com",
+    tasks: [], flags: [],
+    story: [
+      { title: "Facebook", who: "Dana Whitfield", when: "Aug 13", unread: true,
+        text: "Hi - we just moved to a place on Crestview and the yard needs a full cleanup and new mulch beds. Are you taking new customers this month?" }
+    ] },
+  { id: "carl", name: "Carl Jensen", stack: "action", phrase: "Estimate not sent", days: 11, unread: false,
+    source: "Referral", estimate: "$2,300", since: "Jul 27", sent: false,
+    phone: "(414) 555-0134", email: "carl.jensen@example.com",
+    tasks: [], flags: [],
+    story: [
+      { title: "Estimate - $2,300", who: "Paul", when: "Aug 3",
+        text: "Patio joint sand replacement and two mulch beds, per the walk-through." },
+      { title: "Phone call", who: "Paul", when: "Jul 28",
+        text: "Walked the property with Carl. He wants the patio re-sanded and the beds redone before September." },
+      { title: "New lead", who: "Jen", when: "Jul 27", text: "Referred by the Hendersons on Maple Ct." }
+    ] },
+  { id: "rosa", name: "Rosa Delgado", stack: "action", phrase: "Awaiting initial contact", days: 4, unread: false,
+    source: "Phone call", estimate: null, since: "Aug 10", sent: false,
+    phone: "(414) 555-0177", email: "rosa.delgado@example.com",
+    tasks: [{ text: "Call back", due: "Aug 15", overdue: false, done: false, forWho: "Jen" }], flags: [],
+    story: [
+      { title: "Phone call", who: "Rosa Delgado", when: "Aug 10",
+        text: "Left a voicemail asking about weekly mowing for a rental duplex on 27th." }
+    ] },
+  { id: "priya", name: "Priya Nair", stack: "action", phrase: "Estimate scheduled", days: 3, unread: false,
+    source: "Referral", estimate: null, since: "Aug 8", sent: false,
+    phone: "(414) 555-0189", email: "priya.nair@example.com",
+    tasks: [], flags: [],
+    story: [
+      { title: "Estimate scheduled", who: "Jen", when: "Aug 11", text: "Visit set for the morning of Aug 18." },
+      { title: "Phone call", who: "Jen", when: "Aug 8",
+        text: "Priya called about a backyard drainage problem near the patio. Wants someone to take a look." }
+    ] },
+  { id: "tom", name: "Tom Beckett", stack: "action", phrase: "Customer reply received", days: 2, unread: false,
+    source: "Phone call", estimate: "$1,150", since: "Jul 30", sent: true,
+    phone: "(414) 555-0126", email: "tom.beckett@example.com",
+    tasks: [], flags: [],
+    story: [
+      { title: "Email", who: "Tom Beckett", when: "Aug 12",
+        text: "Thanks for the estimate. Could the crew also haul away the old landscape timbers, and would that change the price?",
+        comments: [{ who: "Jen", text: "He is flexible on timing - the haul-away is the only open question." }] },
+      { title: "Estimate sent - $1,150", who: "Paul", when: "Aug 8", text: "Estimate for bed rebuild and edging, sent by email." },
+      { title: "Phone call", who: "Tom Beckett", when: "Jul 30", text: "Asked about rebuilding the front beds before fall." }
+    ] },
+  { id: "walt", name: "Walt Griggs", stack: "action", phrase: "Estimate in progress", days: 1, unread: false,
+    source: "In person", estimate: null, since: "Aug 11", sent: false,
+    phone: "(414) 555-0158", email: "walt.griggs@example.com",
+    tasks: [], flags: [],
+    story: [
+      { title: "Estimate in progress", who: "Paul", when: "Aug 13", text: "Started the paver walkway estimate." },
+      { title: "In person", who: "Paul", when: "Aug 11",
+        text: "Walt stopped by the shop to ask about a paver walkway; we went through his site photos together." }
+    ] },
+  { id: "megan", name: "Megan Foltz", stack: "customer", phrase: "Awaiting reply", days: 6, unread: true,
+    source: "Facebook", estimate: null, since: "Aug 4", sent: false,
+    phone: "(414) 555-0193", email: "megan.foltz@example.com",
+    tasks: [], flags: [],
+    story: [
+      { title: "Email", who: "Megan Foltz", when: "Aug 13", unread: true,
+        text: "We talked it over - a few questions about the drainage option before we decide." },
+      { title: "Email", who: "Mike", when: "Aug 8",
+        text: "Sent over the two approaches for the side yard, with rough figures for each." },
+      { title: "Facebook", who: "Megan Foltz", when: "Aug 4",
+        text: "Asked whether we handle regrading and drainage for a side yard that floods." }
+    ] },
+  { id: "hank", name: "Hank Sorenson", stack: "customer", phrase: "Estimate sent", days: 9, unread: false,
+    source: "Text message", estimate: "$4,850", since: "Jul 24", sent: true,
+    phone: "(414) 555-0142", email: "hank.sorenson@example.com",
+    tasks: [], flags: [{ text: "Order edging stone before the crew arrives", due: "Aug 12", overdue: true, done: false, forWho: "Mike" }],
+    story: [
+      { title: "Estimate sent - $4,850", who: "Paul", when: "Aug 5", text: "Full backyard regrade with new edging, sent by email." },
+      { title: "Email", who: "Paul", when: "Aug 5", text: "Estimate attached, with a note on the two-week weather window." },
+      { title: "Text message", who: "Hank Sorenson", when: "Jul 24",
+        text: "Got your number from the sign on the trailer - looking for a full backyard regrade quote." }
+    ] }
+];
+
+var RECORD = [
+  { id: "alice", name: "Alice Tran", ending: "Won - paid cash", date: "Jul 30",
+    source: "Referral", estimate: "$680", since: "Jul 21",
+    phone: "(414) 555-0102", email: "alice.tran@example.com", tasks: [], flags: [],
+    story: [
+      { title: "Won - paid cash", who: "Jen", when: "Jul 30", text: "Paid cash for the front bed refresh on the day of the visit." },
+      { title: "Phone call", who: "Alice Tran", when: "Jul 21", text: "Asked for a quick refresh of the front beds." }
+    ] },
+  { id: "bruce", name: "Bruce Kimball", ending: "Chose another company", date: "Jul 22",
+    source: "Facebook", estimate: "$3,200", since: "Jul 2",
+    phone: "(414) 555-0119", email: "bruce.kimball@example.com", tasks: [], flags: [],
+    story: [
+      { title: "Chose another company", who: "Mike", when: "Jul 22", text: "Went with another bid on price." },
+      { title: "Estimate sent - $3,200", who: "Paul", when: "Jul 10", text: "Retaining wall repair estimate, sent by email." },
+      { title: "Facebook", who: "Bruce Kimball", when: "Jul 2", text: "Asked about repairing a leaning retaining wall." }
+    ] },
+  { id: "jordan", name: "Jordan Pike", ending: "Not a genuine inquiry", date: "Jul 18",
+    source: "Phone call", estimate: null, since: "Jul 18",
+    phone: "(414) 555-0107", email: "jordan.pike@example.com", tasks: [], flags: [],
+    story: [
+      { title: "Not a genuine inquiry", who: "Jen", when: "Jul 18", text: "Solicitation call, not a service request." },
+      { title: "Phone call", who: "Jordan Pike", when: "Jul 18", text: "Sales pitch for an advertising service." }
+    ] }
+];
+
+var COUNTS = [
+  { label: "Arrived", n: 24, by: [
+    ["Phone call", 8, [["Rosa Delgado", "Aug 10"], ["Tom Beckett", "Jul 30"], ["Gina Marsh", "Jul 29"], ["Pete Vollmer", "Jul 25"], ["Jordan Pike", "Jul 18"], ["Sylvia Grant", "Jul 15"], ["Omar Haddad", "Jul 8"], ["Lena Kowalski", "Jun 27"]]],
+    ["Facebook", 6, [["Dana Whitfield", "Aug 13"], ["Megan Foltz", "Aug 4"], ["Trish Alvarado", "Jul 20"], ["Ken Dowling", "Jul 11"], ["Bruce Kimball", "Jul 2"], ["Marta Silva", "Jun 30"]]],
+    ["Referral", 5, [["Priya Nair", "Aug 8"], ["Carl Jensen", "Jul 27"], ["Alice Tran", "Jul 21"], ["Doug Renner", "Jul 6"], ["Faye Ostrander", "Jun 27"]]],
+    ["Text message", 3, [["Hank Sorenson", "Jul 24"], ["Nick Boyer", "Jul 17"], ["June Park", "Jul 3"]]],
+    ["In person", 1, [["Walt Griggs", "Aug 11"]]],
+    ["Other", 1, [["Roy Lachey", "Jun 25"]]]
+  ] },
+  { label: "Won", n: 9, by: [
+    ["Referral", 4, [["Alice Tran", "Jul 30"], ["Doug Renner", "Jul 18"], ["Sam Whitcomb", "Jul 9"], ["Erin Doyle", "Jun 29"]]],
+    ["Phone call", 2, [["Gina Marsh", "Aug 6"], ["Pete Vollmer", "Jul 31"]]],
+    ["Facebook", 2, [["Trish Alvarado", "Aug 1"], ["Ken Dowling", "Jul 16"]]],
+    ["In person", 1, [["Ray Bautista", "Jul 12"]]]
+  ] },
+  { label: "Lost", n: 6, by: [
+    ["Facebook", 3, [["Bruce Kimball", "Jul 22"], ["Marta Silva", "Jul 14"], ["Cal Emmert", "Jul 5"]]],
+    ["Phone call", 2, [["Sylvia Grant", "Jul 26"], ["Omar Haddad", "Jul 19"]]],
+    ["Referral", 1, [["Faye Ostrander", "Jul 10"]]]
+  ] },
+  { label: "Turned away", n: 4, by: [
+    ["Facebook", 2, [["Vic Morrell", "Jul 8"], ["Dee Falk", "Jun 28"]]],
+    ["Phone call", 1, [["Jordan Pike", "Jul 18"]]],
+    ["Other", 1, [["Roy Lachey", "Jun 26"]]]
+  ] }
+];
+
+var FILTERQ = { leads: "", record: "" };
+
+var DONE = [
+  { text: "Send the estimate", lead: "Priya Nair", forWho: "Paul", due: "Aug 13", done: true },
+  { text: "Call back", lead: "Gina Marsh", forWho: "Jen", due: "Aug 12", done: true },
+  { text: "Confirm the visit time", lead: "Trish Alvarado", forWho: "Jen", due: "Aug 11", done: true },
+  { text: "Follow up", lead: "Ken Dowling", forWho: "Mike", due: "Aug 9", done: true },
+  { text: "Send the estimate", lead: "Pete Vollmer", forWho: "Paul", due: "Aug 8", done: true },
+  { text: "Ask about gate access", lead: "Sam Whitcomb", forWho: "Paul", due: "Aug 7", done: true },
+  { text: "Follow up", lead: "Marta Silva", forWho: "Jen", due: "Aug 5", done: true },
+  { text: "Call back", lead: "Omar Haddad", forWho: "Mike", due: "Aug 4", done: true },
+  { text: "Send the estimate", lead: "Erin Doyle", forWho: "Paul", due: "Aug 2", done: true },
+  { text: "Confirm the color choice", lead: "Doug Renner", forWho: "Paul", due: "Aug 1", done: true }
+];
+var PAST = [
+  { text: "Send the estimate", lead: "Sam Whitcomb", forWho: "Paul", due: "Jul 30", done: true },
+  { text: "Call back", lead: "Sylvia Grant", forWho: "Jen", due: "Jul 28", done: true },
+  { text: "Follow up", lead: "Faye Ostrander", forWho: "Mike", due: "Jul 25", done: true },
+  { text: "Confirm the visit time", lead: "Ray Bautista", forWho: "Jen", due: "Jul 22", done: true },
+  { text: "Send the estimate", lead: "Gina Marsh", forWho: "Paul", due: "Jul 19", done: true },
+  { text: "Ask about the dog in the yard", lead: "Nick Boyer", forWho: "Paul", due: "Jul 16", done: true },
+  { text: "Follow up", lead: "Cal Emmert", forWho: "Jen", due: "Jul 12", done: true },
+  { text: "Call back", lead: "June Park", forWho: "Mike", due: "Jul 9", done: true },
+  { text: "Send the estimate", lead: "Trish Alvarado", forWho: "Paul", due: "Jul 6", done: true },
+  { text: "Confirm the gate code", lead: "Doug Renner", forWho: "Paul", due: "Jul 2", done: true },
+  { text: "Follow up", lead: "Lena Kowalski", forWho: "Jen", due: "Jun 29", done: true },
+  { text: "Call back", lead: "Roy Lachey", forWho: "Mike", due: "Jun 26", done: true }
+];
+var pastShown = 0;
+
+var openLeadId = null;   /* lead currently in the panel */
+var openIsRecord = false;
+
+/* ---------- tiny helpers ---------- */
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function daysLabel(d) { return d === 0 ? "Today" : (d === 1 ? "1 day" : d + " days"); }
+function validEmail(s) { return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s).trim()); }
+function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
+function allTasks() {
+  var out = [];
+  LEADS.concat(RECORD).forEach(function (l) {
+    l.tasks.forEach(function (t) { out.push({ lead: l, item: t, kind: "task" }); });
+    l.flags.forEach(function (f) { out.push({ lead: l, item: f, kind: "flag" }); });
+  });
+  out.sort(function (a, b) { return (b.item.overdue ? 1 : 0) - (a.item.overdue ? 1 : 0); });
+  return out;
+}
+
+/* ---------- leads view ---------- */
+function rowHTML(l, isRecordRow) {
+  var meta = isRecordRow ? esc(l.date) : daysLabel(l.days);
+  var line2 = isRecordRow ? esc(l.ending) : esc(l.phrase);
+  var dot = (!isRecordRow && l.unread) ? '<span class="dot"></span>' : "";
+  var h = '<button type="button" class="lrow" data-open="' + l.id + '">';
+  h += '<div class="l1"><span class="lname">' + dot + "<span>" + esc(l.name) + '</span></span><span class="ldays">' + meta + "</span></div>";
+  if (line2) h += '<div class="l2">' + line2 + "</div>";
+  h += "</button>";
+  return h;
+}
+
+function stackHTML(cls, title, leads, emptyText) {
+  var h = '<div class="stack ' + cls + (cls === "review" ? "" : " has-data") + '">';
+  h += '<div class="stackhead"><h2>' + title + '</h2><span class="count">' + leads.length + "</span></div>";
+  if (leads.length) {
+    h += '<div class="rows">' + leads.map(function (l) { return rowHTML(l, false); }).join("") + "</div>";
+  } else if (emptyText) {
+    h += '<div class="empty"><p>' + emptyText + "</p></div>";
+  }
+  h += "</div>";
+  return h;
+}
+
+function renderLeads() {
+  var q = FILTERQ.leads.trim().toLowerCase();
+  function match(l) {
+    return !q || (l.name + " " + l.phrase + " " + l.source).toLowerCase().indexOf(q) >= 0;
+  }
+  var review = LEADS.filter(function (l) { return l.stack === "review" && match(l); });
+  var action = LEADS.filter(function (l) { return l.stack === "action" && match(l); });
+  var customer = LEADS.filter(function (l) { return l.stack === "customer" && match(l); });
+  var sortD = function (a, b) { return b.days - a.days; };
+  action.sort(sortD); customer.sort(sortD); review.sort(sortD);
+
+  var h = "";
+  if (review.length) h += stackHTML("review", "Awaiting Review", review, null);
+  h += stackHTML("action", "Action Required", action, q ? null : "Nothing is waiting on us right now.");
+  h += stackHTML("customer", "Awaiting Customer", customer, q ? null : "Nothing is out with a customer right now.");
+  $("stacks").innerHTML = h;
+  $("stacks").className = "has-data";
+}
+
+/* ---------- record view ---------- */
+function renderRecord() {
+  $("countsgrid").innerHTML = COUNTS.map(function (c, i) {
+    return '<button type="button" data-brk="' + i + '"><span class="n">' + c.n + '</span><span class="lbl">' + esc(c.label) + "</span></button>";
+  }).join("");
+    var q = FILTERQ.record.trim().toLowerCase();
+  var rows = RECORD.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; })
+    .filter(function (r) { return !q || (r.name + " " + r.ending).toLowerCase().indexOf(q) >= 0; });
+  $("recordrows").innerHTML = rows.map(function (r) { return rowHTML(r, true); }).join("");
+}
+
+/* ---------- my tasks view ---------- */
+function taskRowHTML(t, ref) {
+  var cls = "trow" + (t.done ? " done" : "") + (t.overdue && !t.done ? " overdue" : "");
+  var h = '<div class="' + cls + '">';
+  h += '<button type="button" class="tickbox" data-tick="' + ref + '">' + (t.done ? "&#10003;" : "") + "</button>";
+  h += '<div class="tmain"><div class="tline1"><span class="ttext">' + esc(t.text) + '</span><span class="tdue">due ' + esc(t.due) + "</span></div>";
+  h += '<div class="tsub">' + esc(t.leadName) + " &middot; For " + esc(t.forWho) + "</div></div></div>";
+  return h;
+}
+function renderTasks() {
+  var live = allTasks();
+  var open = live.filter(function (t) { return !t.item.done; });
+  var doneLive = live.filter(function (t) { return t.item.done; });
+  $("taskbadge").textContent = open.length;
+  $("taskbadge").style.display = open.length ? "" : "none";
+  $("taskrows").innerHTML = open.map(function (t) {
+    return taskRowHTML({ text: t.item.text, due: t.item.due, done: false, overdue: t.item.overdue, leadName: t.lead.name, forWho: t.item.forWho }, "L" + live.indexOf(t));
+  }).join("");
+  var recent = doneLive.map(function (t) {
+    return { text: t.item.text, due: t.item.due, done: true, overdue: false, leadName: t.lead.name, forWho: t.item.forWho, ref: "L" + live.indexOf(t) };
+  }).concat(DONE.map(function (d, i) {
+    return { text: d.text, due: d.due, done: d.done, overdue: false, leadName: d.lead, forWho: d.forWho, ref: "D" + i };
+  })).slice(0, 10);
+  $("donerows").innerHTML = recent.map(function (t) { return taskRowHTML(t, t.ref); }).join("");
+  $("pastrows").innerHTML = PAST.slice(0, pastShown).map(function (d, i) {
+    return taskRowHTML({ text: d.text, due: d.due, done: d.done, overdue: false, leadName: d.lead, forWho: d.forWho }, "P" + i);
+  }).join("");
+  $("showmore").style.display = pastShown >= PAST.length ? "none" : "";
+}
+
+/* ---------- panel ---------- */
+function openPanel(id) {
+  var l = byId(LEADS, id); openIsRecord = false;
+  if (!l) { l = byId(RECORD, id); openIsRecord = true; }
+  if (!l) return;
+  openLeadId = id;
+
+  /* opening clears unread, globally */
+  l.unread = false;
+  l.story.forEach(function (e) { e.unread = false; });
+
+  var situ = openIsRecord
+    ? esc(l.ending) + " &middot; " + esc(l.date)
+    : (l.phrase ? esc(l.phrase) + " &middot; " : "") + daysLabel(l.days);
+  var estPart = l.estimate ? "Estimate " + esc(l.estimate) : "No estimate on record";
+  var facts = esc(l.source) + " &middot; " + estPart + " &middot; Lead since " + esc(l.since);
+
+  var h = '<div class="row1"><button type="button" class="backbtn" id="backbtn">' + IC.chev + '</button><h2>' + esc(l.name) + "</h2></div>";
+  h += '<div class="situ">' + situ + "</div>";
+  h += '<div class="facts">' + facts + "</div>";
+  h += '<div class="contact"><a href="tel:' + esc(l.phone) + '">' + esc(l.phone) + '</a><a href="mailto:' + esc(l.email) + '">' + esc(l.email) + "</a></div>";
+  $("phead").innerHTML = h;
+
+  var b = "";
+  var needs = l.tasks.filter(function (t) { return !t.done; }).concat(l.flags.filter(function (f) { return !f.done; }));
+  if (needs.length) {
+    b += '<div class="psec"><h3>Needs attention</h3><div class="needs">';
+    needs.forEach(function (t, i) {
+      b += '<div class="trow' + (t.overdue ? " overdue" : "") + '">';
+      b += '<button type="button" class="tickbox" data-ntick="' + i + '"></button>';
+      b += '<div class="tmain"><div class="tline1"><span class="ttext">' + esc(t.text) + '</span><span class="tdue">due ' + esc(t.due) + "</span></div>";
+      b += '<div class="tsub">For ' + esc(t.forWho) + "</div></div></div>";
+    });
+    b += "</div></div>";
+  }
+
+  b += '<div class="psec"><h3>The story</h3>';
+  if (l.story.length) {
+    b += '<div class="story">' + l.story.map(function (e, i) {
+      var cls = "sentry" + (e.unread ? " unread" : "");
+      var dot = e.unread ? '<span class="dot"></span>' : "";
+      var s = '<div class="' + cls + '" data-entry="' + i + '">';
+      s += '<button type="button" class="shead" data-toggle="' + i + '">';
+      s += '<div class="s1"><span class="stype">' + dot + esc(e.title) + '</span><span class="swhen">' + esc(e.when) + "</span></div>";
+      s += '<div class="s2"><b>' + esc(e.who) + "</b>" + (e.text ? " &middot; " + esc(e.text) : "") + "</div>";
+      s += "</button>";
+      s += '<div class="sbody"><div class="who">' + esc(e.who) + '</div><div class="full">' + esc(e.text || "") + "</div>";
+      (e.comments || []).forEach(function (c) { s += '<div class="cmt"><b>' + esc(c.who) + "</b> &middot; " + esc(c.text) + "</div>"; });
+      if (!openIsRecord) s += '<div class="srowbtns"><button type="button" class="btn btn-ghost" data-flagmsg="' + i + '">' + IC.flag + " Flag</button></div>";
+      s += "</div></div>";
+      return s;
+    }).join("") + "</div>";
+  } else {
+    b += '<div class="empty"><p>No correspondence on record yet. Emails, logged calls and texts, notes, and estimate events will appear here as they happen.</p></div>';
+  }
+  b += "</div>";
+  $("pbody").innerHTML = b;
+
+  if (openIsRecord) {
+    $("actionbar").className = "actionbar single";
+    $("actionbar").innerHTML = '<button type="button" class="btn btn-green btn-wide" id="ab-reopen">' + IC.undo + " Reopen</button>";
+  } else {
+    $("actionbar").className = "actionbar";
+    $("actionbar").innerHTML =
+      '<button type="button" class="abtn primary" id="ab-reply">' + IC.reply + "Reply</button>" +
+      '<button type="button" class="abtn" id="ab-log">' + IC.log + "Log call-text</button>" +
+      '<button type="button" class="abtn" id="ab-flag">' + IC.flag + "Flag</button>" +
+      '<button type="button" class="abtn" id="ab-more">' + IC.more + "More</button>";
+  }
+
+  $("panel").classList.add("open");
+  $("panel").setAttribute("aria-hidden", "false");
+  document.body.classList.add("panel-open");
+  renderAll();
+}
+
+function closePanel() {
+  openLeadId = null;
+  $("panel").classList.remove("open");
+  $("panel").setAttribute("aria-hidden", "true");
+  document.body.classList.remove("panel-open");
+}
+
+function currentLead() { return openIsRecord ? byId(RECORD, openLeadId) : byId(LEADS, openLeadId); }
+
+/* ---------- sheets ---------- */
+function openSheet(title, sub, bodyHTML, backFn) {
+  var root = $("sheetroot");
+  root.innerHTML = '<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-label="' + esc(title) + '">' +
+    '<div class="sheet-head">' +
+    (backFn ? '<button type="button" class="backbtn sheetback" id="sheetback">' + IC.chev + "</button>" : "") +
+    '<h3 class="sheet-title">' + esc(title) + '</h3><button type="button" class="xbtn" id="sheetx">&times;</button></div>' +
+    (sub ? '<p class="sheet-sub">' + esc(sub) + "</p>" : "") +
+    bodyHTML + "</div></div>";
+  $("scrim").addEventListener("click", function (ev) { if (ev.target === this) closeSheet(); });
+  $("sheetx").addEventListener("click", closeSheet);
+  if (backFn) $("sheetback").addEventListener("click", function () { backFn(); });
+}
+function closeSheet() { $("sheetroot").innerHTML = ""; }
+
+function optsHTML(name, options, two) {
+  return '<div class="opts' + (two ? " two" : "") + '" data-optgroup="' + name + '">' +
+    options.map(function (o) { return '<button type="button" class="opt" data-val="' + esc(o) + '">' + esc(o) + "</button>"; }).join("") + "</div>";
+}
+function wireOpts(cb) {
+  var groups = $("sheetroot").querySelectorAll("[data-optgroup]");
+  Array.prototype.forEach.call(groups, function (g) {
+    if (g.getAttribute("data-wired")) return;
+    g.setAttribute("data-wired", "1");
+    g.addEventListener("click", function (ev) {
+      var b = ev.target.closest(".opt"); if (!b) return;
+      Array.prototype.forEach.call(g.querySelectorAll(".opt"), function (x) { x.classList.remove("on"); });
+      b.classList.add("on");
+      if (cb) cb(g.getAttribute("data-optgroup"), b.getAttribute("data-val"));
+    });
+  });
+}
+function pickedVal(name) {
+  var g = $("sheetroot").querySelector('[data-optgroup="' + name + '"] .opt.on');
+  return g ? g.getAttribute("data-val") : null;
+}
+function nowLocal() {
+  var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 16);
+}
+
+/* -- Log a conversation -- */
+function sheetLog() {
+  var l = currentLead(); if (!l) return;
+  var b = '<div class="flabel">&nbsp;</div>' + optsHTML("channel", ["Phone call", "Text message", "In person"]) +
+    '<div id="dirblock"></div>' +
+    '<div class="flabel">When</div><input class="ctl" type="datetime-local" id="log-when" value="' + nowLocal() + '">' +
+    '<div class="flabel">What was said</div><textarea class="ctl" id="log-text"></textarea>' +
+    '<button type="button" class="btn btn-green btn-wide" id="log-save">' + IC.check + ' Save</button>';
+  openSheet("Log a conversation", "For a conversation that already happened. Nothing here contacts the customer.", b);
+
+  function paintDir(channel) {
+    var d = $("dirblock");
+    if (channel === "In person") {
+      d.innerHTML = '<div class="flabel">Where it left things</div>' +
+        optsHTML("outcome", ["The next move is ours", "Waiting on the customer"], true) +
+        '<p class="fnote">This places the lead: our move next keeps it in Action Required; waiting on the customer places it in Awaiting Customer.</p>';
+    } else {
+      d.innerHTML = '<div class="flabel">&nbsp;</div>' +
+        optsHTML("direction", ["They contacted us", "We contacted them"], true) +
+        '<p class="fnote">This is what places the lead: a customer reaching us puts the next move with us; our reaching them puts it with them.</p>';
+    }
+    wireOpts();
+  }
+  wireOpts(function (group, val) { if (group === "channel") paintDir(val); });
+
+  $("log-save").addEventListener("click", function () {
+    var channel = pickedVal("channel"); if (!channel) return;
+    var toUs = channel === "In person"
+      ? pickedVal("outcome") === "The next move is ours"
+      : pickedVal("direction") === "They contacted us";
+    if (channel === "In person" ? !pickedVal("outcome") : !pickedVal("direction")) return;
+    var text = $("log-text").value || "";
+    var who = toUs ? l.name : "Mike";
+    if (channel === "In person") who = "Mike";
+    l.story.unshift({ title: channel, who: who, when: "Aug 14", text: text });
+    l.stack = toUs ? "action" : "customer";
+    l.phrase = toUs ? "Customer reply received" : (l.sent ? "Estimate sent" : "Awaiting reply");
+    l.days = 0;
+    closeSheet(); renderAll(); openPanel(l.id);
+  });
+}
+
+/* -- Flag for someone -- */
+function sheetFlag(fromMessage) {
+  var l = currentLead(); if (!l) return;
+  var b = '<div class="flabel"><span class="req">*</span> For</div>' + optsHTML("forwho", ["Paul", "Jen", "Mike"]) +
+    '<div class="flabel"><span class="req">*</span> What is needed</div><input class="ctl" type="text" id="flag-text">' +
+    '<div class="flabel">Needed by (optional)</div><input class="ctl" type="date" id="flag-due">' +
+    (fromMessage ? '<p class="fnote">This flag will be tied to the message you opened it from.</p>' : "") +
+    '<button type="button" class="btn btn-green btn-wide" id="flag-save">' + IC.check + ' Save</button>';
+  openSheet("Flag for someone", "Ask for a look at this lead. The flag lands on that person's My tasks list.", b);
+  wireOpts();
+  $("flag-save").addEventListener("click", function () {
+    var forWho = pickedVal("forwho"), text = $("flag-text").value;
+    if (!forWho || !text) return;
+    var due = $("flag-due").value ? $("flag-due").value.slice(5).replace("-", "/") : "Aug 21";
+    l.flags.push({ text: text, due: due, overdue: false, done: false, forWho: forWho });
+    closeSheet(); renderAll(); openPanel(l.id);
+  });
+}
+
+/* -- Record an ending -- */
+function sheetEnding() {
+  var l = currentLead(); if (!l) return;
+  var b = '<div class="grouphead">Lost - the customer\'s decision</div>' +
+    optsHTML("cat1", ["Chose another company", "Declined the estimate", "No response"]) +
+    '<div class="grouphead">Turned away - our decision</div>' +
+    optsHTML("cat2", ["Not a fit for our services", "Outside service area", "Not a genuine inquiry"]) +
+    '<div class="grouphead">Won</div>' + optsHTML("cat3", ["Won - paid cash"]) +
+    '<div class="flabel"><span class="req">*</span> What happened</div><input class="ctl" type="text" id="end-text">' +
+    '<div class="confirmline" id="end-confirm" hidden></div>' +
+    '<button type="button" class="btn btn-green btn-wide" id="end-save" disabled>' + IC.check + ' Record the ending</button>';
+  openSheet("Record an ending", "Close a lead that is not moving forward. An ending is never final - Reopen brings it back at any time.", b, sheetMore);
+
+  var picked = null;
+  wireOpts(function (group, val) {
+    if (group.slice(0, 3) !== "cat") return;
+    ["cat1", "cat2", "cat3"].forEach(function (g) {
+      if (g !== group) Array.prototype.forEach.call(
+        $("sheetroot").querySelectorAll('[data-optgroup="' + g + '"] .opt'),
+        function (x) { x.classList.remove("on"); });
+    });
+    picked = val;
+    var c = $("end-confirm");
+    c.hidden = false;
+    c.textContent = "This files " + l.name + ' in the Record as "' + val + '". The story stays intact, and Reopen can bring them back.';
+    refresh();
+  });
+  function refresh() { $("end-save").disabled = !(picked && $("end-text").value); }
+  $("end-text").addEventListener("input", refresh);
+  $("end-save").addEventListener("click", function () {
+    l.story.unshift({ title: picked, who: "Mike", when: "Aug 14", text: $("end-text").value });
+    LEADS.splice(LEADS.indexOf(l), 1);
+    l.ending = picked; l.date = "Aug 14";
+    RECORD.unshift(l);
+    closeSheet(); closePanel(); renderAll();
+  });
+}
+
+/* -- Reopen -- */
+function sheetReopen() {
+  var l = currentLead(); if (!l) return;
+  var b = '<div class="confirmline">This returns ' + esc(l.name) + " to the working list under Awaiting Review. Nothing is lost - the whole story, including the recorded ending, stays on the timeline.</div>" +
+    '<button type="button" class="btn btn-green btn-wide" id="reopen-go">' + IC.undo + ' Reopen</button>';
+  openSheet("Reopen", "", b);
+  $("reopen-go").addEventListener("click", function () {
+    RECORD.splice(RECORD.indexOf(l), 1);
+    l.stack = "review"; l.phrase = ""; l.days = 0; l.unread = false;
+    LEADS.push(l);
+    closeSheet(); closePanel(); renderAll();
+    setSeg("leads");
+  });
+}
+
+/* -- More menu -- */
+function sheetMore() {
+  var b = '<div class="opts">' +
+    '<button type="button" class="opt" id="m-note">Add a note</button>' +
+    '<button type="button" class="opt" id="m-task">Create a task</button>' +
+    '<button type="button" class="opt" id="m-status">Set the status</button>' +
+    '<button type="button" class="opt" id="m-enroll">Enroll email history</button>' +
+    '<button type="button" class="opt" id="m-end">Record an ending</button>' +
+    "</div>";
+  openSheet("More", "", b);
+  $("m-note").addEventListener("click", function () { closeSheet(); sheetNote(); });
+  $("m-task").addEventListener("click", function () { closeSheet(); sheetTask(); });
+  $("m-status").addEventListener("click", function () { closeSheet(); sheetStatus(); });
+  $("m-enroll").addEventListener("click", function () { closeSheet(); sheetEnroll(); });
+  $("m-end").addEventListener("click", function () { closeSheet(); sheetEnding(); });
+}
+
+/* -- Add a note -- */
+function sheetNote() {
+  var l = currentLead(); if (!l) return;
+  var b = '<textarea class="ctl" id="note-text"></textarea>' +
+    '<button type="button" class="btn btn-green btn-wide" id="note-save">' + IC.check + ' Save</button>';
+  openSheet("Add a note", "", b, sheetMore);
+  $("note-save").addEventListener("click", function () {
+    if (!$("note-text").value) return;
+    l.story.unshift({ title: "Note", who: "Mike", when: "Aug 14", text: $("note-text").value });
+    closeSheet(); openPanel(l.id);
+  });
+}
+
+/* -- Create a task -- */
+function sheetTask() {
+  var l = currentLead(); if (!l) return;
+  var b = '<div class="presets">' +
+    '<button type="button" class="preset">Call back</button>' +
+    '<button type="button" class="preset">Send the estimate</button>' +
+    '<button type="button" class="preset">Follow up</button></div>' +
+    '<div class="flabel"><span class="req">*</span> What is needed</div><input class="ctl" type="text" id="task-text">' +
+    '<div class="flabel"><span class="req">*</span> For</div>' + optsHTML("forwho", ["Paul", "Jen", "Mike"]) +
+    '<div class="flabel">Needed by (optional)</div><input class="ctl" type="date" id="task-due">' +
+    '<button type="button" class="btn btn-green btn-wide" id="task-save">' + IC.check + ' Save</button>';
+  openSheet("Create a task", "", b, sheetMore);
+  wireOpts();
+  Array.prototype.forEach.call($("sheetroot").querySelectorAll(".preset"), function (p) {
+    p.addEventListener("click", function () { $("task-text").value = p.textContent; });
+  });
+  $("task-save").addEventListener("click", function () {
+    var forWho = pickedVal("forwho"), text = $("task-text").value;
+    if (!forWho || !text) return;
+    var due = $("task-due").value ? $("task-due").value.slice(5).replace("-", "/") : "Aug 21";
+    l.tasks.push({ text: text, due: due, overdue: false, done: false, forWho: forWho });
+    closeSheet(); renderAll(); openPanel(l.id);
+  });
+}
+
+/* -- Set the status -- */
+function sheetStatus() {
+  var l = currentLead(); if (!l) return;
+  var b = optsHTML("status", ["Awaiting initial contact", "Awaiting reply", "Estimate scheduled", "Estimate not sent"]) +
+    '<button type="button" class="btn btn-green btn-wide" id="status-save">' + IC.check + ' Save</button>';
+  openSheet("Set the status", "For anything the page cannot work out on its own - a bid made outside the system, or a state that needs correcting.", b, sheetMore);
+  wireOpts();
+  $("status-save").addEventListener("click", function () {
+    var v = pickedVal("status"); if (!v) return;
+    l.phrase = v;
+    l.stack = (v === "Awaiting reply") ? "customer" : "action";
+    l.days = 0;
+    l.story.unshift({ title: v, who: "Mike", when: "Aug 14", text: "" });
+    closeSheet(); renderAll(); openPanel(l.id);
+  });
+}
+
+/* -- Enroll email history -- */
+function sheetEnroll() {
+  var l = currentLead(); if (!l) return;
+  var b = '<p class="fnote">Brings this person\'s past email with us into the story.</p>' +
+    '<button type="button" class="btn btn-green btn-wide" id="enroll-go">' + IC.check + ' Enroll email history</button>';
+  openSheet("Enroll email history", "", b, sheetMore);
+  $("enroll-go").addEventListener("click", function () {
+    l.story.push({ title: "Email", who: l.name, when: "Jun 30", text: "Earlier message brought in by enrollment." });
+    l.story.push({ title: "Email", who: "Jen", when: "Jun 30", text: "Earlier reply brought in by enrollment." });
+    closeSheet(); openPanel(l.id);
+  });
+}
+
+/* -- Reply -- */
+function sheetReply() {
+  var l = currentLead(); if (!l) return;
+  var b = '<div class="flabel">To</div><input class="ctl mailfield" type="email" id="reply-to" value="' + esc(l.email) + '">' +
+    '<div class="flabel">CC</div><input class="ctl mailfield" type="text" id="reply-cc">' +
+    '<div class="flabel">BCC</div><input class="ctl mailfield" type="text" id="reply-bcc">' +
+    '<div class="toolbar">' +
+    '<button type="button" class="tbtn" data-cmd="bold"><b>B</b></button>' +
+    '<button type="button" class="tbtn" data-cmd="italic"><i>I</i></button>' +
+    '<button type="button" class="tbtn" data-cmd="insertUnorderedList">' + IC.list + "</button>" +
+    '<button type="button" class="tbtn" data-cmd="createLink">' + IC.link + "</button>" +
+    "</div>" +
+    '<div class="ctl rich" id="reply-rich" contenteditable="true"></div>' +
+    '<div class="attachrow" id="attachrow"></div>' +
+    '<button type="button" class="btn btn-ghost" id="reply-attach" style="margin-top:10px;">' + IC.clip + " Attach</button>" +
+    '<input type="file" id="reply-file" hidden multiple>' +
+    '<button type="button" class="btn btn-green btn-wide" id="reply-send">' + IC.send + " Send</button>";
+  openSheet("Reply", "", b);
+  function checkMail(el) {
+    var v = el.value.trim();
+    var okv = v === "" || v.split(",").every(function (p) { return validEmail(p); });
+    el.classList.toggle("invalid", !okv);
+    return okv;
+  }
+  Array.prototype.forEach.call($("sheetroot").querySelectorAll(".mailfield"), function (el) {
+    el.addEventListener("input", function () { checkMail(el); });
+  });
+  Array.prototype.forEach.call($("sheetroot").querySelectorAll(".tbtn"), function (btn) {
+    btn.addEventListener("click", function () {
+      $("reply-rich").focus();
+      var cmd = btn.getAttribute("data-cmd");
+      if (typeof document.execCommand === "function") {
+        try {
+          if (cmd === "createLink") document.execCommand(cmd, false, "https://");
+          else document.execCommand(cmd, false, null);
+        } catch (e) {}
+      }
+    });
+  });
+  $("reply-attach").addEventListener("click", function () { $("reply-file").click(); });
+  $("reply-file").addEventListener("change", function () {
+    Array.prototype.forEach.call(this.files, function (f) {
+      var chip = document.createElement("span");
+      chip.className = "attachchip";
+      chip.textContent = f.name;
+      $("attachrow").appendChild(chip);
+    });
+  });
+  $("reply-send").addEventListener("click", function () {
+    var el = $("reply-rich");
+    var text = String(el.innerText !== undefined ? el.innerText : el.textContent).replace(/\s+$/, "");
+    var toEl = $("reply-to");
+    if (!text) return;
+    if (toEl.value.trim() === "" || !checkMail(toEl)) { toEl.classList.add("invalid"); return; }
+    if (!checkMail($("reply-cc")) || !checkMail($("reply-bcc"))) return;
+    l.story.unshift({ title: "Email", who: "Mike", when: "Aug 14", text: text });
+    l.stack = "customer";
+    l.phrase = l.sent ? "Estimate sent" : "Awaiting reply";
+    l.days = 0;
+    closeSheet(); renderAll(); openPanel(l.id);
+  });
+}
+
+/* -- Add a lead -- */
+function sheetAddLead() {
+  var b = '<div class="flabel"><span class="req">*</span> Name</div><input class="ctl" type="text" id="al-name">' +
+    '<div class="flabel"><span class="req">*</span> How they found us</div>' +
+    optsHTML("source", ["Text message", "Phone call", "Facebook", "In person", "Referral", "Other"], true) +
+    '<div class="flabel">Phone (optional)</div><input class="ctl" type="tel" id="al-phone">' +
+    '<div class="notice" id="al-match" hidden></div>' +
+    '<div class="flabel">Email (optional)</div><input class="ctl" type="email" id="al-email">' +
+    '<div id="al-enrollrow" hidden><div class="opts"><button type="button" class="opt" id="al-enroll">Enroll email history</button></div>' +
+    '<p class="fnote">Brings this person\'s past email with us into the story.</p></div>' +
+    '<div class="flabel">Address (optional)</div><input class="ctl" type="text" id="al-addr">' +
+    '<div class="flabel">What they said (optional)</div><input class="ctl" type="text" id="al-said">' +
+    '<div class="flabel">Where things stand</div>' + optsHTML("stand", ["New lead", "Estimate scheduled"], true) +
+    '<button type="button" class="btn btn-green btn-wide" id="al-save">' + IC.check + ' Save</button>';
+  openSheet("Add a lead", "For an inquiry that arrives by phone, by text, or in person.", b);
+  wireOpts();
+  /* default: New lead */
+  $("sheetroot").querySelector('[data-optgroup="stand"] .opt').classList.add("on");
+
+    $("al-phone").addEventListener("input", function () {
+    var digits = this.value.replace(/\D/g, "").slice(0, 10);
+    var f = digits;
+    if (digits.length > 6) f = "(" + digits.slice(0, 3) + ") " + digits.slice(3, 6) + "-" + digits.slice(6);
+    else if (digits.length > 3) f = "(" + digits.slice(0, 3) + ") " + digits.slice(3);
+    else if (digits.length > 0) f = "(" + digits.slice(0, 3);
+    this.value = f;
+    var hit = null;
+    LEADS.concat(RECORD).forEach(function (x) {
+      if (digits.length >= 7 && x.phone.replace(/\D/g, "").slice(-7) === digits.slice(-7)) hit = x;
+    });
+    $("al-match").hidden = !hit;
+    if (hit) $("al-match").textContent = "This matches " + hit.name + ", already on record. The inquiry will join their existing story instead of creating a duplicate.";
+  });
+    $("al-email").addEventListener("input", function () {
+    this.classList.toggle("invalid", this.value !== "" && !validEmail(this.value));
+    $("al-enrollrow").hidden = this.value.indexOf("@") < 0;
+  });
+  $("al-enroll").addEventListener("click", function () { this.classList.toggle("on"); });
+
+  $("al-save").addEventListener("click", function () {
+    var name = $("al-name").value, source = pickedVal("source");
+    if (!name || !source) return;
+    var stand = pickedVal("stand") || "New lead";
+    var said = $("al-said").value;
+    var nl = {
+      id: "n" + Date.now(), name: name, stack: "action",
+      phrase: stand === "Estimate scheduled" ? "Estimate scheduled" : "Awaiting initial contact",
+      days: 0, unread: false, source: source, estimate: null, since: "Aug 14", sent: false,
+      phone: $("al-phone").value || "", email: $("al-email").value || "",
+      tasks: [], flags: [],
+      story: said ? [{ title: source, who: name, when: "Aug 14", text: said }] : []
+    };
+    if ($("al-enroll") && $("al-enroll").classList.contains("on")) {
+      nl.story.push({ title: "Email", who: name, when: "Jun 30", text: "Earlier message brought in by enrollment." });
+    }
+    LEADS.push(nl);
+    closeSheet(); renderAll(); setSeg("leads");
+  });
+}
+
+/* -- Counts breakdown -- */
+function sheetBreakdown(i) {
+  var c = COUNTS[i];
+  var b = c.by.map(function (row, j) {
+    return '<button type="button" class="brk" data-src="' + j + '"><span>' + esc(row[0]) + '</span><span class="n">' + row[1] + "</span></button>";
+  }).join("");
+  openSheet(c.label + " this season, by source", "", b);
+  Array.prototype.forEach.call($("sheetroot").querySelectorAll("[data-src]"), function (btn) {
+    btn.addEventListener("click", function () { sheetNames(i, parseInt(btn.getAttribute("data-src"), 10)); });
+  });
+}
+function sheetNames(i, j) {
+  var c = COUNTS[i], row = c.by[j];
+  var names = row[2] || [];
+  var b = '<input class="ctl" type="search" id="namesearch" placeholder="Search names" autocomplete="off">' +
+    '<div id="namerows"></div>';
+  openSheet(c.label + " this season \u00b7 " + row[0], "", b, function () { sheetBreakdown(i); });
+  function paint(q) {
+    q = String(q || "").toLowerCase();
+    $("namerows").innerHTML = names.filter(function (n) { return n[0].toLowerCase().indexOf(q) >= 0; })
+      .map(function (n) { return '<div class="brk"><span>' + esc(n[0]) + '</span><span class="swhen">' + esc(n[1]) + "</span></div>"; }).join("");
+  }
+  paint("");
+  $("namesearch").addEventListener("input", function () { paint(this.value); });
+}
+
+/* ---------- view switching + wiring ---------- */
+function setSeg(which) {
+  ["leads", "record", "tasks"].forEach(function (v) {
+    $("seg-" + v).classList.toggle("on", v === which);
+    $("view-" + v).hidden = v !== which;
+  });
+  $("addleadbtn").style.visibility = which === "leads" ? "visible" : "hidden";
+}
+
+function renderAll() { renderLeads(); renderRecord(); renderTasks(); }
+
+document.addEventListener("click", function (ev) {
+  var t = ev.target;
+  var openBtn = t.closest("[data-open]");
+  if (openBtn) { openPanel(openBtn.getAttribute("data-open")); return; }
+  var brk = t.closest("[data-brk]");
+  if (brk) { sheetBreakdown(parseInt(brk.getAttribute("data-brk"), 10)); return; }
+    var tick = t.closest("[data-tick]");
+  if (tick) {
+    var ref = tick.getAttribute("data-tick");
+    var kind = ref.charAt(0), idx = parseInt(ref.slice(1), 10);
+    if (kind === "L") { var items = allTasks(); if (items[idx]) items[idx].item.done = !items[idx].item.done; }
+    else if (kind === "D") { DONE[idx].done = !DONE[idx].done; }
+    else if (kind === "P") { PAST[idx].done = !PAST[idx].done; }
+    renderTasks();
+    return;
+  }
+  var ntick = t.closest("[data-ntick]");
+  if (ntick) {
+    var l = currentLead();
+    var needs = l.tasks.filter(function (x) { return !x.done; }).concat(l.flags.filter(function (x) { return !x.done; }));
+    var n = needs[parseInt(ntick.getAttribute("data-ntick"), 10)];
+    if (n) { n.done = true; renderAll(); openPanel(l.id); }
+    return;
+  }
+  var tog = t.closest("[data-toggle]");
+  if (tog) { tog.closest(".sentry").classList.toggle("openx"); return; }
+  var fm = t.closest("[data-flagmsg]");
+  if (fm) { sheetFlag(true); return; }
+  if (t.closest("#backbtn")) { closePanel(); return; }
+  if (t.closest("#ab-reply")) { sheetReply(); return; }
+  if (t.closest("#ab-log")) { sheetLog(); return; }
+  if (t.closest("#ab-flag")) { sheetFlag(false); return; }
+  if (t.closest("#ab-more")) { sheetMore(); return; }
+  if (t.closest("#ab-reopen")) { sheetReopen(); return; }
+});
+
+$("seg-leads").addEventListener("click", function () { setSeg("leads"); });
+$("seg-record").addEventListener("click", function () { setSeg("record"); });
+$("seg-tasks").addEventListener("click", function () { setSeg("tasks"); });
+$("addleadbtn").addEventListener("click", sheetAddLead);
+$("emptytoggle").addEventListener("click", function () {
+  var on = document.body.classList.toggle("demo-empty");
+    this.textContent = on ? "Show sample data" : "Show empty states";
+});
+$("leadsearch").addEventListener("input", function () { FILTERQ.leads = this.value; renderLeads(); });
+$("recordsearch").addEventListener("input", function () { FILTERQ.record = this.value; renderRecord(); });
+$("pastwrap").addEventListener("toggle", function () {
+  if (this.open && pastShown === 0) { pastShown = 5; renderTasks(); }
+});
+$("showmore").addEventListener("click", function () { pastShown += 5; renderTasks(); });
+
+renderAll();
+setSeg("leads");
+</script>
+</body>
+</html>
