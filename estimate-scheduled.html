@@ -1,0 +1,2231 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A-Plus Lawn Care &mdash; Calendar</title>
+<!--
+  Estimate Scheduled / Calendar &mdash; MOCKUP, act 3, draft 2.
+
+  Standalone clickable HTML. No product imports, no server template, no
+  framework. Judged in a browser at about 380px wide.
+
+  COPY. Every person-facing string comes from
+  docs/slices/estimate-scheduled-2-copy.md section 2, EXCEPT where Mike
+  changed it at the draft 1 review (Aug 16 2026). Those changes are marked
+  in the copy block below as [M2] and are amendments to the blessed record,
+  to be written back into the copy record at closeout.
+
+  THREE STRINGS ARE INSTANCE-TEMPLATED, exactly as the copy record's own
+  hover labels are: the two count-bubble hover labels and the cancel
+  sheet's subject line. Their wording is verbatim; their names, times and
+  dates come from the visit in hand.
+
+  THE SCRIPT IS ES5 ON PURPOSE. A standalone mockup is not page.js-class,
+  so the constraint does not apply here - but it does apply to the build,
+  which edits src/pipeline/page.js, and writing this in var / function /
+  string concatenation makes that port close to mechanical.
+
+  ZERO NON-ASCII BYTES is a hard constraint of the validation battery.
+  Person-facing dashes are written as the &mdash; entity.
+-->
+<style>
+  :root {
+    --ink: #16211b;
+    --ink-soft: #46544b;
+    --ink-mute: #8a978d;
+    --paper: #f5f3ec;
+    --surface: #ffffff;
+    --line: #e4e0d5;
+    --line-soft: #efece3;
+    --green: #2e6b43;
+    --green-deep: #1f4d30;
+    --green-brt: #46a05f;
+    --green-wash: #e9f1ea;
+    --danger: #b3422f;
+    --radius: 13px;
+    --radius-sm: 9px;
+    --tap: 52px;
+    --maxw: 480px;
+    --amber-bg: #fdf1e3;
+    --amber-ink: #8a4b0f;
+    /* The orange count bubble, drawn from the app's own warm family above.
+       No Google event colour appears anywhere in this file. */
+    --warn: #c2711c;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #f1f4f1;
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-text-size-adjust: 100%;
+  }
+  button { font: inherit; }
+  a { color: var(--green-deep); }
+  svg { flex: none; }
+  /* An icon is sized by the context holding it. Without this an SVG carrying
+     only a viewBox expands to fill its button, which is what draft 2 did. */
+  .btn svg { width: 18px; height: 18px; }
+  .btn.big svg { width: 19px; height: 19px; }
+  .xbtn svg { width: 17px; height: 17px; }
+  .estrow svg { width: 20px; height: 20px; }
+  .umark svg { width: 12px; height: 12px; }
+  .emark svg { width: 12px; height: 12px; }
+
+  .sr {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  /* -- Reviewer scaffolding. NOT product chrome. ------------------------- */
+  .revbar {
+    max-width: var(--maxw); margin: 0 auto; background: #e7ece7;
+    border-bottom: 1px dashed #b9c6ba; padding: 10px 12px 12px;
+  }
+  .revlab {
+    margin: 0 0 8px; font-size: 10.5px; font-weight: 800; letter-spacing: .5px;
+    text-transform: uppercase; color: #5d6f60;
+  }
+  .revrow { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .revbtn {
+    background: var(--surface); border: 1px solid #b9c6ba; border-radius: var(--radius-sm);
+    padding: 9px 8px; font-size: 12.5px; font-weight: 700; color: #46544b;
+    cursor: pointer; min-height: 40px;
+  }
+  .revbtn.on { background: #46544b; border-color: #46544b; color: #fff; }
+  .revgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .revgrid label {
+    display: flex; flex-direction: column; gap: 3px;
+    font-size: 10.5px; font-weight: 800; letter-spacing: .4px;
+    text-transform: uppercase; color: #5d6f60;
+  }
+  .revgrid select {
+    font: inherit; font-size: 12.5px; color: var(--ink); background: var(--surface);
+    border: 1px solid #b9c6ba; border-radius: 7px; padding: 7px 6px; min-height: 36px;
+  }
+  .revnotes { margin-top: 9px; font-size: 12px; color: #4d5c4f; }
+  .revnotes summary { cursor: pointer; font-weight: 700; }
+  .revnotes ul { margin: 7px 0 0; padding-left: 17px; }
+  .revnotes li { margin-bottom: 5px; line-height: 1.45; }
+
+  /* -- Shell -------------------------------------------------------------- */
+  .shell {
+    max-width: var(--maxw); margin: 0 auto; background: var(--paper);
+    min-height: 100vh; padding: 0 0 40px;
+  }
+  @media (min-width: 560px) {
+    .shell {
+      min-height: 0; margin: 16px auto 30px; border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: 0 1px 3px rgba(22,33,27,.07); overflow: hidden;
+    }
+  }
+  .appbar {
+    background: var(--green-deep); color: #fff; padding: 11px 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .appbar .brand { font-size: 13px; font-weight: 700; opacity: .82; }
+  .appbar .navnow {
+    margin-left: auto; font-size: 12px; font-weight: 800; letter-spacing: .3px;
+    background: rgba(255,255,255,.16); border-radius: 999px; padding: 3px 10px;
+  }
+  .pad { padding: 14px 14px 0; }
+  .cols { display: block; }
+  h1.pgh { margin: 0; font-size: 21px; letter-spacing: -.4px; }
+
+  /* -- Phone stage strip --------------------------------------------------- */
+  .stgstrip { margin: 0 0 12px; }
+  .stgnow {
+    width: 100%; text-align: left; cursor: pointer; background: #fff;
+    border: 1px solid #d5ddd5; border-radius: 10px; min-height: var(--tap);
+    color: var(--ink); padding: 8px 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .stgnow .snlab { font-size: 14px; font-weight: 800; }
+  .stgnow .snarr { margin-left: auto; color: var(--ink-mute); font-size: 12px; }
+  .stgstrip.is-open .stgnow { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+  .stglist {
+    display: none; background: #fff; border: 1px solid #d5ddd5; border-top: none;
+    border-radius: 0 0 10px 10px; overflow: hidden;
+  }
+  .stgstrip.is-open .stglist { display: block; }
+  .stgrow {
+    display: flex; align-items: center; gap: 8px; width: 100%; font-size: 13.5px;
+    text-align: left; padding: 11px 14px; min-height: 46px; border: none;
+    border-top: 1px solid var(--line-soft); background: none; color: var(--ink); cursor: pointer;
+  }
+  .stgrow:hover { background: #f6f8f6; }
+  .stgrow .srlab { display: inline-flex; flex-direction: column; gap: 2px; }
+  .stgrow .srsub { font-size: .92em; color: #5a6b5c; }
+  .stgrow.is-here { font-weight: 800; }
+  .stgrow .srcnt { margin-left: auto; display: inline-flex; gap: 4px; align-items: center; }
+  .stgrow .plaincnt { font-size: 12px; font-weight: 700; color: var(--ink-mute); }
+
+  .cbub {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 21px; height: 21px; padding: 0 6px; border-radius: 999px;
+    font-size: 12px; font-weight: 800; color: #fff; cursor: default;
+  }
+  .cbub.red { background: var(--danger); }
+  .cbub.orange { background: var(--warn); }
+  .cbub.dots {
+    background: none; color: var(--ink-mute); font-size: 15px; letter-spacing: 1px;
+    font-weight: 700; min-width: 0; padding: 0 2px;
+  }
+
+  /* -- Board frame --------------------------------------------------------- */
+  .boardlede { margin: 0 0 12px; font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); }
+  .stageline {
+    margin: 0 0 10px; padding: 10px 12px; background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius-sm);
+    font-size: 13px; line-height: 1.55; color: var(--ink-soft);
+    display: flex; gap: 8px; align-items: flex-start;
+  }
+  .stageline p { margin: 0; }
+  .countnote { margin: 0 0 14px; font-size: 12.5px; line-height: 1.55; color: var(--ink-mute); }
+  .hbtn {
+    flex: none; width: 20px; height: 20px; margin-top: 1px; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--surface); color: var(--ink-mute);
+    font-size: 11.5px; font-weight: 800; line-height: 1; cursor: pointer; padding: 0;
+  }
+  .hbtn[aria-expanded="true"] { background: var(--green-wash); color: var(--green-deep); border-color: var(--green-brt); }
+  .howto {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    margin: 0 0 14px; overflow: hidden;
+  }
+  .howto > summary {
+    cursor: pointer; list-style: none; padding: 13px 14px; min-height: var(--tap);
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13.5px; font-weight: 800; color: var(--green-deep);
+  }
+  .howto > summary::-webkit-details-marker { display: none; }
+  .howto > summary::after { content: "+"; margin-left: auto; font-size: 18px; color: var(--ink-mute); }
+  .howto[open] > summary::after { content: "-"; }
+  .howbody { padding: 0 14px 15px; border-top: 1px solid var(--line-soft); }
+  .howbody h4 {
+    margin: 15px 0 5px; font-size: 11.5px; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--green-deep);
+  }
+  .howbody p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-soft); }
+
+  /* -- Buttons: icon + label, the app's own convention --------------------- */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 44px; padding: 0 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--line); background: var(--surface); color: var(--green-deep);
+    font-size: 13.5px; font-weight: 700; cursor: pointer; text-decoration: none;
+  }
+  .btn:hover { background: var(--green-wash); }
+  .btn.solid { background: var(--green); border-color: var(--green); color: #fff; }
+  .btn.solid:hover { background: var(--green-deep); }
+  .btn.danger { color: var(--danger); }
+  .btn.danger:hover { background: #fbecea; }
+  .btn.big { width: 100%; min-height: var(--tap); font-size: 14.5px; font-weight: 800; }
+  .btn.small { min-height: 40px; padding: 0 11px; font-size: 12.5px; }
+
+  /* -- Surface header ------------------------------------------------------ */
+  .dayhead { display: flex; align-items: center; gap: 8px; margin: 0 0 10px; }
+  .daydate { font-size: 16px; font-weight: 800; letter-spacing: -.2px; }
+  .dayhead .btn { margin-left: auto; }
+
+  /* -- Sections ------------------------------------------------------------ */
+  .sechead {
+    display: flex; align-items: center; gap: 9px; margin: 22px 0 10px;
+    font-size: 14.5px; font-weight: 800; letter-spacing: -.2px; color: var(--ink);
+  }
+  .sechead::before {
+    content: ""; flex: none; width: 3px; height: 17px;
+    background: var(--green-brt); border-radius: 2px;
+  }
+  .sechead::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .empty {
+    margin: 0; padding: 12px 13px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius-sm); font-size: 13px; line-height: 1.55; color: var(--ink-soft);
+  }
+  .empty + .empty { margin-top: 8px; }
+
+  /* -- Estimate visit cards ------------------------------------------------ */
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 12px 13px; margin: 0 0 10px;
+  }
+  .cardtop { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ctime {
+    font-size: 13px; font-weight: 800; color: var(--green-deep);
+    background: var(--green-wash); border-radius: 999px; padding: 2px 9px;
+  }
+  .ctime.done { color: var(--ink-mute); background: #e6e2d6; }
+  .card.past { background: #f1eee6; border-color: #ded9cc; }
+  .card.past .cname { color: var(--ink-soft); }
+  .card.past .cmeta, .card.past .cdetail { color: var(--ink-mute); }
+  .emark {
+    display: inline-flex; align-items: center; gap: 4px; background: var(--ink-soft);
+    color: #fff; border-radius: 8px; padding: 2px 8px; font-size: 11.5px; font-weight: 800;
+  }
+  .cname { font-size: 16px; font-weight: 800; letter-spacing: -.2px; margin: 6px 0 0; }
+  .cmeta { margin: 6px 0 0; font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+  .cmeta a { text-decoration: none; }
+  .cdetail {
+    margin: 8px 0 0; padding-top: 8px; border-top: 1px solid var(--line-soft);
+    font-size: 13px; line-height: 1.55; color: var(--ink-soft);
+  }
+  .cacts { display: flex; gap: 6px; margin: 11px 0 0; }
+  .cacts .btn { flex: 1; min-width: 0; padding: 0 8px; gap: 5px; font-size: 12.5px;
+    white-space: nowrap; }
+  .cacts .btn.solid { flex: 1.7; }
+
+  /* An estimate-coloured event whose title does not match a customer. It is
+     marked ONLY on the card, where it explains the missing phone, email and
+     Estimates control. It is NOT marked in the events list or the calendar:
+     it is one event among many there, and the marker was pure noise. */
+  .umark {
+    display: inline-flex; align-items: center; gap: 4px; background: var(--amber-bg);
+    color: var(--amber-ink); border-radius: 8px; padding: 2px 8px;
+    font-size: 11.5px; font-weight: 800;
+  }
+
+  /* -- Pills: kind name + kind icon ---------------------------------------- */
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+    background: var(--line-soft); color: var(--ink-soft); border-radius: 999px;
+    padding: 2px 9px 2px 7px; font-size: 11.5px; font-weight: 800;
+  }
+  .pill.est { background: var(--green-wash); color: var(--green-deep); }
+  .pill svg { width: 13px; height: 13px; }
+
+  /* -- Person badges -------------------------------------------------------- */
+  .pbadge {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 21px; height: 21px; border-radius: 999px; font-size: 10.5px;
+    font-weight: 800; color: #fff; flex: none;
+  }
+  .pb-Paul { background: var(--green-deep); }
+  .pb-Jen { background: var(--amber-ink); }
+  .pb-Mike { background: var(--ink-soft); }
+
+  /* -- Events list ---------------------------------------------------------- */
+  .evlist { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+  .evrow {
+    display: flex; align-items: flex-start; gap: 9px; padding: 10px 12px;
+    border-top: 1px solid var(--line-soft); font-size: 13px;
+  }
+  .evrow:first-child { border-top: none; }
+  .evtime {
+    font-weight: 700; white-space: nowrap; min-width: 58px; color: var(--ink-soft);
+    font-variant-numeric: tabular-nums; padding-top: 1px;
+  }
+  .evbody { flex: 1; min-width: 0; }
+  .evline1 { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .evwho { font-size: 13.5px; font-weight: 800; color: var(--ink); }
+  .evtitle { margin-top: 2px; color: var(--ink-soft); line-height: 1.45; }
+
+  /* -- Calendar ------------------------------------------------------------- */
+  .calbar { display: flex; align-items: center; gap: 6px; margin: 0 0 9px; }
+  .segs { display: inline-flex; background: var(--line-soft); border-radius: 999px; padding: 3px; gap: 2px; }
+  .seg {
+    border: none; background: none; border-radius: 999px; padding: 6px 12px; min-height: 34px;
+    font-size: 12.5px; font-weight: 700; color: var(--ink-soft); cursor: pointer;
+  }
+  .seg.on { background: var(--surface); color: var(--green-deep); font-weight: 800; box-shadow: 0 1px 2px rgba(22,33,27,.10); }
+  .calnav { margin-left: auto; display: flex; gap: 5px; }
+  .icobtn {
+    min-width: 38px; min-height: 38px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--surface); color: var(--green-deep); font-size: 12px; cursor: pointer; padding: 0;
+  }
+  .icobtn:hover { background: var(--green-wash); }
+  .calrange { font-size: 13.5px; font-weight: 800; margin: 0 0 9px; }
+
+  .cal { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+
+  /* Month grid */
+  .mdow { display: grid; grid-template-columns: repeat(7, 1fr); border-bottom: 1px solid var(--line); }
+  .mdow span {
+    text-align: center; padding: 7px 0; font-size: 10.5px; font-weight: 800;
+    letter-spacing: .4px; text-transform: uppercase; color: var(--ink-mute);
+  }
+  .mgrid { display: grid; grid-template-columns: repeat(7, 1fr); }
+  .mcell {
+    border: none; background: none; cursor: pointer; padding: 5px 2px 6px; min-height: 50px;
+    border-top: 1px solid var(--line-soft); border-right: 1px solid var(--line-soft);
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .mcell:nth-child(7n) { border-right: none; }
+  .mcell:hover { background: #e7e4d9; }
+  .mnum { font-size: 13px; font-weight: 700; line-height: 1; width: 24px; height: 24px;
+    display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; }
+  .mcell.out .mnum { color: #c2ccc3; }
+  .mcell.today .mnum { background: var(--green); color: #fff; font-weight: 800; }
+  .mcell.sel .mnum { box-shadow: 0 0 0 2px var(--green-brt); }
+  .mdots { display: flex; gap: 3px; height: 6px; }
+  .mdot { width: 5px; height: 5px; border-radius: 999px; background: var(--ink-mute); }
+  .mdot.est { background: var(--green-brt); }
+  .mday { border-top: 1px solid var(--line); padding: 4px 0 2px; }
+  .mdayhead {
+    margin: 0; padding: 9px 12px 3px; font-size: 12px; font-weight: 800; color: var(--ink-soft);
+  }
+
+  /* Week grid */
+  .wkscroll { overflow: auto; max-height: 64vh; -webkit-overflow-scrolling: touch; }
+  .wkgutter {
+    position: sticky; left: 0; z-index: 4; background: var(--surface);
+    border-right: 1px solid var(--line);
+  }
+  .wkhead .wkgutter, .wkallday .wkgutter { z-index: 6; }
+  .wkhead { display: grid; grid-template-columns: 40px repeat(7, minmax(104px, 1fr));
+    border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5;
+    background: var(--surface); }
+  .wkhead > span { text-align: center; padding: 6px 0; font-size: 10.5px; font-weight: 800; color: var(--ink-mute); }
+  .wkhead .wknum { display: block; font-size: 13px; color: var(--ink); }
+  .wkhead .isnow .wknum { color: var(--green-deep); }
+  .wkallday { display: grid; grid-template-columns: 40px repeat(7, minmax(104px, 1fr));
+    border-bottom: 1px solid var(--line); min-height: 20px; position: sticky; top: 41px;
+    z-index: 5; background: var(--surface); }
+  .wkallday .adcell { border-left: 1px solid var(--line-soft); padding: 2px; min-width: 0; }
+  .adchip {
+    background: var(--line-soft); color: var(--ink-soft); border-radius: 4px;
+    font-size: 9.5px; font-weight: 700; padding: 1px 3px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .wkbody { display: grid; grid-template-columns: 40px repeat(7, minmax(104px, 1fr)); }
+  /* No position of its own: .wkgutter's sticky is what keeps the hours on
+     screen while the week scrolls sideways, and a later "relative" here
+     silently overrode it. */
+  .wkhours { }
+  .wkhour { height: 38px; font-size: 9px; color: var(--ink-mute); text-align: right; padding-right: 4px; }
+  .wkcol { position: relative; border-left: 1px solid var(--line-soft); min-width: 0; }
+  .wkcol.isnow { background: rgba(46,160,95,.05); }
+  .wkline { height: 38px; border-bottom: 1px solid var(--line-soft); }
+  .wkev {
+    position: absolute; border-radius: 4px; padding: 2px 4px; overflow: hidden;
+    font-size: 9.5px; line-height: 11px; font-weight: 700;
+    white-space: normal; word-break: break-word;
+    background: var(--line-soft); color: var(--ink-soft); border-left: 3px solid var(--ink-mute);
+  }
+  .wkev .wkt { font-weight: 800; opacity: .8; margin-right: 3px; }
+  /* The inner box is capped at a WHOLE number of lines, so overflow clips on
+     a line boundary whether or not the browser honours line-clamp. Relying on
+     the clamp alone left half a line showing. */
+  .wktext { overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; }
+  .wkev.p-Paul { border-left-color: var(--green-deep); }
+  .wkev.p-Jen { border-left-color: var(--amber-ink); }
+  .wkev.p-Mike { border-left-color: var(--ink-soft); }
+  .wkev.est { background: var(--green-wash); color: var(--green-deep); border-left-color: var(--green-brt); }
+
+  /* List (agenda) */
+  .lrow { display: flex; gap: 10px; padding: 9px 12px; border-top: 1px solid var(--line-soft); }
+  .lrow:first-child { border-top: none; }
+  .lrow.today { background: var(--green-wash); }
+  .ldate { flex: none; width: 34px; text-align: center; }
+  .ldow { display: block; font-size: 10.5px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; color: var(--ink-mute); }
+  .lnum { display: block; font-size: 16px; font-weight: 800; line-height: 1.2; }
+  .lrow.today .lnum { color: var(--green-deep); }
+  .levs { flex: 1; display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+  .lchip { font-size: 12px; color: var(--ink-soft); display: flex; gap: 6px; align-items: baseline; }
+  .ldot { flex: none; width: 7px; height: 7px; border-radius: 999px; background: var(--ink-mute); margin-top: 5px; }
+  .lchip.est .ldot { background: var(--green-brt); }
+  .lchip.est { color: var(--ink); font-weight: 650; }
+  .ltime { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* An empty day is drawn, not left as a gap, so it does not read as a
+     rendering fault. No sentence: the calendar itself gets no empty state. */
+  .lnone { color: #c2ccc3; font-size: 15px; letter-spacing: 2px; line-height: 1; padding: 4px 0; }
+
+  /* -- Cannot reach --------------------------------------------------------- */
+  .down {
+    margin: 16px 0 0; padding: 13px; background: var(--surface); border: 1px solid var(--danger);
+    border-radius: var(--radius); font-size: 13px; line-height: 1.6; color: var(--ink-soft);
+  }
+  .down p { margin: 0 0 10px; }
+
+  /* -- Sheets ---------------------------------------------------------------- */
+  .scrim {
+    position: fixed; inset: 0; background: rgba(22,33,27,.45); z-index: 60;
+    display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; transition: opacity .2s ease;
+  }
+  .scrim.is-open { opacity: 1; }
+  .scrim.is-closing { opacity: 0; }
+  .sheet {
+    width: min(432px, 100%); background: var(--surface); border-radius: 16px 16px 0 0;
+    max-height: 88vh; overflow-y: auto; padding: 0 16px calc(18px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform .34s cubic-bezier(.2, 1.25, .4, 1);
+  }
+  .scrim.is-open .sheet { transform: translateY(0); }
+  .scrim.is-closing .sheet { transform: translateY(100%); transition: transform .2s ease-in; }
+  /* The close control stays reachable while the sheet scrolls. */
+  .sheet-head {
+    position: sticky; top: 0; z-index: 2; background: var(--surface);
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    padding: 14px 0 9px; border-bottom: 1px solid var(--line-soft);
+  }
+  .sheet-title { margin: 0; font-size: 16.5px; letter-spacing: -.2px; }
+  .sheet-sub { margin: 11px 0 0; font-size: 12.5px; color: var(--ink-mute); line-height: 1.5; }
+  .xbtn {
+    background: none; border: 1px solid var(--line); cursor: pointer; color: var(--ink-soft);
+    width: 36px; height: 36px; border-radius: 999px; margin: -3px -2px 0 0;
+    display: inline-flex; align-items: center; justify-content: center; flex: none;
+  }
+  .xbtn:hover { background: var(--green-wash); }
+  .flabel {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .45px; color: var(--ink-mute);
+    font-weight: 800; margin: 14px 0 5px;
+  }
+  .ctl {
+    width: 100%; font: inherit; font-size: 14px; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 11px 12px; min-height: 44px;
+  }
+  textarea.ctl { min-height: 76px; resize: vertical; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  /* Category and Calendar are icon grids, not dropdowns: a dropdown cannot
+     carry an icon per option. */
+  .optgrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .opt {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    min-height: 58px; padding: 6px 3px; border: 1px solid var(--line); background: var(--surface);
+    border-radius: var(--radius-sm); font-size: 10.5px; font-weight: 700; color: var(--ink-soft);
+    cursor: pointer; text-align: center; line-height: 1.2;
+  }
+  .opt:hover { background: var(--green-wash); }
+  .opt.on { border-color: var(--green); background: var(--green-wash); color: var(--green-deep); box-shadow: inset 0 0 0 1px var(--green); }
+  .opt svg { width: 19px; height: 19px; }
+  .sheetact { width: 100%; margin: 16px 0 0; }
+  .sheetact + .sheetact { margin-top: 8px; }
+  .actrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 18px 0 0; }
+  .sheetdate { margin: 12px 0 2px; font-size: 15.5px; font-weight: 800; color: var(--ink); }
+  .sheeterr {
+    margin: 12px 0 0; padding: 10px 12px; background: #fbecea; border: 1px solid var(--danger);
+    border-radius: var(--radius-sm); color: var(--danger); font-size: 12.5px; line-height: 1.5;
+  }
+  .repnote {
+    margin: 14px 0 0; padding: 9px 11px; background: var(--amber-bg); color: var(--amber-ink);
+    border-radius: 8px; font-size: 12px; line-height: 1.5;
+  }
+  .estrow {
+    display: flex; align-items: center; width: 100%; text-align: left; gap: 9px;
+    border: 1px solid transparent; border-radius: var(--radius-sm);
+    padding: 9px 10px; min-height: var(--tap); cursor: pointer; color: var(--ink);
+    text-decoration: none; background: none;
+  }
+  .estrow:hover { background: var(--green-wash); border-color: var(--green-brt); }
+  .estrow svg { color: var(--green-deep); }
+  .estno { font-size: 14px; font-weight: 800; display: block; }
+  .estwhen { display: block; font-size: 12px; color: var(--ink-mute); font-weight: 600; }
+  .estdiv { margin: 12px 0 0; border-top: 1px solid var(--line); }
+  .qbdown {
+    margin: 14px 0 0; background: var(--amber-bg); color: var(--amber-ink);
+    border-radius: 8px; padding: 9px 11px; font-size: 12.5px; line-height: 1.5;
+  }
+  .peekrow { display: flex; gap: 9px; padding: 10px 0; border-top: 1px solid var(--line-soft); font-size: 13px; }
+  .peekrow:first-of-type { border-top: none; }
+  .peektime { font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .peekname { font-weight: 700; }
+  .peekplace { display: block; font-size: 12px; color: var(--ink-mute); font-weight: 400; }
+  .peeknote { margin: 12px 0 0; font-size: 12px; color: var(--ink-mute); line-height: 1.5; }
+  .sheetpad { padding-top: 12px; }
+
+  .overlay {
+    position: fixed; inset: 0; z-index: 90; background: rgba(245,243,236,.74);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .spinner {
+    width: 34px; height: 34px; border-radius: 999px;
+    border: 3px solid var(--green-wash); border-top-color: var(--green);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .acwrap { position: relative; }
+  .aclist {
+    position: absolute; left: 0; right: 0; top: 100%; z-index: 5; margin-top: 4px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm);
+    box-shadow: 0 8px 24px rgba(22,33,27,.16); overflow: hidden;
+  }
+  .acrow {
+    display: block; width: 100%; text-align: left; border: none; background: none;
+    padding: 10px 12px; min-height: 44px; font-size: 13px; cursor: pointer;
+    color: var(--ink); border-top: 1px solid var(--line-soft);
+  }
+  .acrow:first-child { border-top: none; }
+  .acrow:hover { background: var(--green-wash); }
+  .acnote {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 8px;
+    border-radius: 8px; padding: 3px 9px; font-size: 11.5px; font-weight: 800;
+  }
+  .acnote:empty { display: none; }
+  .acnote.good { background: var(--green-wash); color: var(--green-deep); }
+  .acnote.warn { background: var(--amber-bg); color: var(--amber-ink); }
+  .acnote svg { width: 12px; height: 12px; }
+
+  /* The hover card on a week block: the grid can only ever show a little. */
+  .wkpop {
+    position: fixed; z-index: 95; max-width: 264px; padding: 10px 12px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(22,33,27,.18); font-size: 12.5px; line-height: 1.5;
+    color: var(--ink-soft); opacity: 0; visibility: hidden; pointer-events: none;
+    transition: opacity .16s ease, visibility .16s;
+  }
+  .wkpop.is-open { opacity: 1; visibility: visible; }
+  .wkpop .wkpt { display: block; font-size: 13.5px; font-weight: 800; color: var(--ink); margin-bottom: 3px; }
+  .wkpop .wkpm { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .wkpop .wkpq { font-weight: 800; font-variant-numeric: tabular-nums; min-width: 54px; }
+
+  /* ======================================================================
+     DESKTOP. LAST IN THE STYLESHEET ON PURPOSE: these rules override base
+     rules declared above them, and a media block placed earlier loses to
+     every one of them.
+     ====================================================================== */
+  @media (min-width: 900px) {
+    .shell { max-width: 1280px; }
+    .pad { padding: 18px 20px 0; }
+
+    /* Modular rather than two fixed columns: the day and the calendar share
+       the first row, today's events take the whole of the second. */
+    .cols {
+      display: grid; grid-template-columns: repeat(12, 1fr);
+      column-gap: 24px; align-items: start;
+    }
+    .colmain { grid-column: 1 / span 4; grid-row: 1; }
+    .colside { grid-column: 5 / -1; grid-row: 1; }
+    .colwide { grid-column: 1 / -1; grid-row: 2; }
+    .colmain > .sechead:first-child, .colside > .sechead:first-child { margin-top: 16px; }
+
+    /* Today's events use the width by putting each event on ONE line with
+       its columns aligned, rather than by fragmenting into narrow columns. */
+    .colwide .evrow { align-items: center; }
+    .colwide .evbody { display: flex; align-items: center; gap: 12px; }
+    .colwide .evline1 { flex: none; width: 210px; }
+    .colwide .evwho { min-width: 40px; }
+    .colwide .evtitle { margin-top: 0; flex: 1; min-width: 0; }
+
+    .optgrid { grid-template-columns: repeat(5, 1fr); }
+    .boardlede { max-width: 78ch; }
+
+    /* A proper modal in the middle of the screen, fading rather than rising. */
+    .scrim { align-items: center; }
+    .sheet {
+      width: min(520px, 100%); border-radius: 16px; max-height: 82vh;
+      box-shadow: 0 24px 60px rgba(22,33,27,.30);
+      transform: scale(.97); opacity: 0;
+      transition: transform .18s ease, opacity .18s ease;
+    }
+    .scrim.is-open .sheet { transform: scale(1); opacity: 1; }
+    .scrim.is-closing .sheet {
+      transform: scale(.98); opacity: 0;
+      transition: transform .16s ease, opacity .16s ease;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="revbar">
+  <p class="revlab">Reviewer controls &mdash; not part of the product</p>
+  <div class="revrow">
+    <button type="button" class="revbtn on" id="mStage">In the pipeline board</button>
+    <button type="button" class="revbtn" id="mPage">As its own page</button>
+  </div>
+  <div class="revgrid">
+    <label>Day
+      <select id="revScenario">
+        <option value="normal">Normal day</option>
+        <option value="noEst">No estimate visits today</option>
+        <option value="noEstAllDay">No estimates, next is all day</option>
+        <option value="nothing">Nothing on the calendar today</option>
+        <option value="nothingAhead">Nothing today, nothing ahead</option>
+        <option value="down">Google cannot be reached</option>
+      </select>
+    </label>
+    <label>QuickBooks
+      <select id="revQb">
+        <option value="ok">Reachable</option>
+        <option value="down">Cannot be reached</option>
+      </select>
+    </label>
+    <label>Booking write
+      <select id="revBook">
+        <option value="ok">Succeeds</option>
+        <option value="fail">Fails</option>
+      </select>
+    </label>
+    <label>Move sheet
+      <select id="revRepeat">
+        <option value="single">Single occurrence</option>
+        <option value="repeat">Repeating event</option>
+      </select>
+    </label>
+  </div>
+  <details class="revnotes">
+    <summary>Notes for review</summary>
+    <ul>
+      <li>The calendar now has three views. Month and Week are real grids;
+        List is the agenda from draft 1. The arrows work in all three and
+        move a month or a week at a time.</li>
+      <li>Proposed, not blessed: the No customer record and Ended markers,
+        the whole How this stage works accordion, the move sheet's reasons,
+        Write Estimate, and Title Case on all three section headings.</li>
+      <li>Widen the window past 900px for the desktop layout. Above 760px
+        the real board shows its seven-chevron bar; this mockup keeps the
+        collapsed strip rather than redrawing a bar it does not own.</li>
+      <li>The unmatched marker appears ONLY on a card. It cannot appear on
+        an Office, Personal or Call event; only on one coloured as an
+        Estimate whose title matches no customer.</li>
+      <li>The week grid scrolls sideways so a day column can be wide enough
+        to read. The hour column stays pinned.</li>
+    </ul>
+  </details>
+</div>
+
+<div class="shell" id="shell"></div>
+<div id="sheetHost"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* =====================================================================
+     ICONS. One family: 20x20 box, stroked in currentColor, round caps -
+     the app's own convention, so a button is always icon plus label.
+     ===================================================================== */
+  function ic(inner, extra) {
+    return '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" '
+      + 'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" '
+      + 'width="18" height="18"'
+      + (extra ? " " + extra : "") + ">" + inner + "</svg>";
+  }
+  var ICON = {
+    refresh: ic('<path d="M16.4 8.2A6.6 6.6 0 1 0 16.8 11.6"/><path d="M16.9 3.6v4.6h-4.6"/>'),
+    schedule: ic('<rect x="3" y="4.6" width="14" height="12.6" rx="2"/><path d="M3 8.6h14M7 3.1v3M13 3.1v3M10 11v4M8 13h4"/>'),
+    estimates: ic('<path d="M5 3.4h6l4 4v9.2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4.4a1 1 0 0 1 1-1z"/><path d="M11 3.4v4h4M6.6 11h6.8M6.6 14h4.6"/>'),
+    move: ic('<circle cx="10" cy="10.4" r="6.4"/><path d="M10 6.6v4l2.6 1.7"/>'),
+    x: ic('<path d="M6 6l8 8M14 6l-8 8"/>'),
+    check: ic('<path d="M4.4 10.4l3.6 3.6 7.6-8.2"/>'),
+    plus: ic('<path d="M10 4.4v11.2M4.4 10h11.2"/>'),
+    open: ic('<path d="M8 4.6H4.6v10.8h10.8V12"/><path d="M11.4 4.6h4v4M15.4 4.6L9 11"/>'),
+    write: ic('<path d="M11.4 3.9a1.9 1.9 0 0 1 2.7 2.7L6.4 14.3l-3.1.8.8-3.1z"/><path d="M10.6 5.2l2.7 2.7"/>')
+  };
+  /* One icon per event kind, used on the pill and in the booking form's
+     Category grid so the two always read as the same thing. */
+  var KIND_ICON = {
+    "Estimate": ic('<rect x="4.6" y="3.8" width="10.8" height="13" rx="2"/><path d="M7.6 3.8V2.6h4.8v1.2"/><path d="M7.4 9h5.2M7.4 12.2h3.4"/>'),
+    "Appointment": ic('<rect x="3" y="4.6" width="14" height="12.6" rx="2"/><path d="M3 8.6h14M7 3.1v3M13 3.1v3"/><path d="M7.6 12.4l1.7 1.7 3.3-3.5"/>'),
+    "Site visit": ic('<path d="M10 17.2s5.4-5 5.4-9a5.4 5.4 0 1 0-10.8 0c0 4 5.4 9 5.4 9z"/><circle cx="10" cy="8.1" r="1.9"/>'),
+    "Call": ic('<path d="M4.4 4.2h3.2l1.4 3.4-2 1.4a9.8 9.8 0 0 0 4 4l1.4-2 3.4 1.4v3.2a1 1 0 0 1-1.1 1C8.6 16 4 11.4 3.4 5.3a1 1 0 0 1 1-1.1z"/>'),
+    "Delivery/pickup": ic('<path d="M2.6 5.6h8v7.6h-8z"/><path d="M10.6 8.4h3l2.4 2.6v2.2h-5.4z"/><circle cx="6.2" cy="15.2" r="1.5"/><circle cx="13.6" cy="15.2" r="1.5"/>'),
+    "Office": ic('<path d="M4 17.2V3.6h8v13.6"/><path d="M12 8.8h4v8.4"/><path d="M6.4 6.6h3.2M6.4 9.6h3.2M6.4 12.6h3.2"/>'),
+    "Reserved": ic('<rect x="4.6" y="8.8" width="10.8" height="7.8" rx="1.6"/><path d="M7.4 8.8V6.6a2.6 2.6 0 0 1 5.2 0v2.2"/>'),
+    "Personal": ic('<circle cx="10" cy="7" r="3"/><path d="M4.4 16.6c0-3 2.6-4.6 5.6-4.6s5.6 1.6 5.6 4.6"/>'),
+    "Other": ic('<circle cx="5.4" cy="10" r="1.3" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="1.3" fill="currentColor" stroke="none"/><circle cx="14.6" cy="10" r="1.3" fill="currentColor" stroke="none"/>')
+  };
+  var KINDS = ["Estimate", "Appointment", "Site visit", "Call",
+               "Delivery/pickup", "Office", "Reserved", "Personal", "Other"];
+  var PEOPLE = ["Paul", "Jen", "Mike"];
+
+  /* =====================================================================
+     STATE
+     ===================================================================== */
+  var MOUNT = "stage";
+  var SCEN = "normal";
+  var QB = "ok";
+  var BOOKW = "ok";
+  var REPEAT = "single";
+  var stripOpen = false;
+  var helpOpen = false;
+  var CALVIEW = "month";
+  var anchor = null;   /* the date the calendar is showing */
+  var selDay = null;   /* the day chosen in the month grid */
+
+  var TODAY = new Date(2026, 7, 15);          /* Saturday, August 15, 2026 */
+  var NOW_MIN = 11 * 60;                       /* 11:00 AM */
+
+  /* =====================================================================
+     COPY. Transcribed from docs/slices/estimate-scheduled-2-copy.md
+     section 2, except where marked [M2] - changed by Mike at the draft 1
+     review, Aug 16 2026, and owed back to the copy record at closeout.
+     ===================================================================== */
+  var C = {
+    pageName: "Calendar",
+
+    boardLede: "The Pipeline tracks every deal from the first inquiry through to the final invoice. Each segment is one stage of the journey: a lead arrives and someone works it, the estimate visit is booked, the estimate goes out, the customer accepts, the deposit is sent and paid, the work is planned for the crew, and the finished job is invoiced.",
+    /* The chevron's own help on a wide screen, blessed at the copy act. It is
+       NOT rendered as a bubble beside the stage line, where it restated the
+       line it sat next to; it rides the strip row instead. */
+    stageHelp: "Estimate visits that are booked, taken from the Google Calendars for Paul, Jen and Mike. Visits are booked, moved and cancelled from this screen, and a visit booked directly in Google Calendar appears here as well.",
+
+    /* PROPOSED, not blessed. The "How this stage works" accordion, on the
+       Leads page's own details.howto pattern. */
+    howTitle: "How this stage works",
+    how: [
+      ["Why it matters",
+       "Every estimate visit sits on this one screen, whoever booked it and wherever it was booked. Today's visits come first, in the order they happen, so the day reads the way it will be worked. The whole day stays visible after a visit is done, because what already happened is often what the next call is about."],
+      ["Where to start",
+       "Work down today's visits from the top. Each one carries the time, the customer, where to go, how to reach them and what they have asked for, and the Estimates control opens what has already been written for that customer. The red number on the segment counts the visits still to come today, so it runs down to nothing as the day is worked."],
+      ["Where the events come from",
+       "Three Google Calendars, one for Paul, one for Jen and one for Mike, are read into this screen together. The colour on an event decides which kind it is, and an event coloured as an estimate is matched to a customer by the name at the start of its title. That match is what lets a card carry a phone number, an email address and a list of saved estimates; without it, the visit still appears with everything that was typed into it."],
+      ["Booking, moving and cancelling",
+       "All three happen from this screen rather than in Google Calendar, and each is recorded. A visit booked straight into Google Calendar still appears here, and where something has been changed there, that change stands: this screen shows it and never puts it back. A repeating event is only ever touched one occurrence at a time. No calendar invitation is sent to a customer at any point."],
+      ["The calendar beneath",
+       "The same events are drawn three ways. Month is for finding a free day. Week is for seeing how a day sits against the ones around it. List is for reading what is coming, day by day. A personal event shows only its time and the word Personal, so a day can be held without publishing what it holds."],
+      ["What happens on its own - and what does not",
+       "Booking a visit does not move anyone off the lead list; they stay there until their estimate is sent. Cancelling a visit records the reason and returns that person to the lead list with the status Estimate canceled, and a new visit may be booked at any time. Nothing on this screen contacts a customer. If Google Calendar cannot be read, the screen says so plainly rather than showing a quiet day."]
+    ],
+    dotsHover: "The calendar could not be reached",
+
+    peekLink: "Tomorrow's estimates",
+    peekNote: "Visits may still be booked for tomorrow, so this list can change.",
+    peekEmpty: "No estimate visits are booked for tomorrow yet.",
+
+    noEstimates: "No estimate visits are booked for today.",
+    nextTimed: "The next one is at 9:00 AM on Thursday, August 20, 2026.",
+    nextAllDay: "The next one is all day on Thursday, August 20, 2026.",
+    nothingToday: "Nothing is on the calendar for today.",
+    nothingAhead: "Nothing is booked for the days ahead either.",
+
+    downMsg: "Google Calendar could not be reached just now, so today's visits and events cannot be shown. This is not an empty day: the schedule has not been read, so nothing can be listed here.",
+    tryAgain: "Try again",
+    refresh: "Refresh",
+
+    /* PROPOSED, not blessed. Replaces "Not matched to a customer", which
+       Mike reported as unclear at the draft 1 review. */
+    unmatchedMark: "No customer record",
+    /* PROPOSED, not blessed. A faded time chip was not enough to say that a
+       visit has already happened. */
+    endedMark: "Ended",
+    /* PROPOSED, not blessed. Whether the address was checked against a map
+       or merely typed. */
+    addrOk: "Address verified",
+    addrUnchecked: "Address not verified",
+
+    bookTitle: "Book a visit",
+    personalNote: "A personal event shows its time and the word Personal to everyone else. The title and the details are not shown.",
+    bookAct: "Add to the calendar",
+    bookFail: "This visit was not added to the calendar, so nothing has been booked. You can try again.",
+
+    moveTitle: "Move this visit",
+    moveAct: "Save",                                   /* [M2] was "Save the change" */
+    /* PROPOSED, not blessed. The move sheet's reason, on the cancel sheet's
+       own pattern. */
+    moveWhy: "Why is it being moved?",
+    moveReasons: ["Customer rescheduled", "Weather", "We rescheduled",
+                  "Booked in error", "Other"],
+    repeatsA: "This event repeats. A change here affects ",
+    repeatsB: " only. The whole series is changed in Google Calendar.",
+
+    cancelTitle: "Cancel this visit?",
+    cancelBodyA: "This visit will be removed from the calendar. ",
+    cancelBodyB: " remains on the lead list with the status Estimate canceled, and a new visit may be booked at any time.",
+    cancelWhy: "Why is it being canceled?",
+    cancelReasons: ["Customer canceled", "Customer did not show", "Weather",
+                    "We canceled", "Booked in error", "Other"],
+    cancelOther: "What happened",
+    cancelDo: "Cancel Visit",                          /* [M3] was "Cancel the visit" */
+    cancelKeep: "Keep Visit",                          /* [M3] was "Keep the visit" */
+
+    estMenuA: "Estimates for ",
+    estNew: "New estimate",
+    estDown: "The saved estimates could not be read from QuickBooks just now. This does not mean there are none.",
+
+    estimates: "Estimates",                            /* [M2] was "Estimate" */
+    writeEstimate: "Write Estimate",                   /* [M4] when none are saved */
+    schedule: "Schedule",                              /* [M2] was "Schedule estimate" */
+    move: "Move",
+    cancel: "Cancel",
+    changeStage: "Change stage"
+  };
+
+  /* The three section headings are Mike's own ordering, transcribed from
+     docs/slices/estimate-scheduled-1-design.md section 2. */
+  /* "Today's Events" is Mike's own, Aug 16 2026. The other two follow its
+     casing, which is PROPOSED - the earlier sentence-case forms came from
+     the design act's ordering. */
+  var H_VISITS = "Estimates Scheduled Today";
+  var H_EVENTS = "Today's Events";
+  var H_CAL = "The Calendar";
+
+  var STAGES = [
+    { key: "leads", label: "Leads", sub: "", count: 12 },
+    { key: "scheduled", label: "Estimate Scheduled", sub: "", calendar: true },
+    { key: "sent", label: "Sent", sub: "", count: 7 },
+    { key: "accepted", label: "Accepted", sub: "Send Deposit Invoice", count: 3 },
+    { key: "waiting", label: "Waiting for Payment", sub: "", count: 4 },
+    { key: "ready", label: "Ready to Schedule", sub: "Plan Jobs", count: 2 },
+    { key: "completed", label: "Completed", sub: "Send Final Invoice", count: 6 }
+  ];
+
+  /* =====================================================================
+     DATES
+     ===================================================================== */
+  var DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  var DOW3 = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  var DOW1 = ["S", "M", "T", "W", "T", "F", "S"];
+  var MON = ["January", "February", "March", "April", "May", "June", "July",
+             "August", "September", "October", "November", "December"];
+
+  function d2(n) { return (n < 10 ? "0" : "") + n; }
+  function key(d) { return d.getFullYear() + "-" + d2(d.getMonth() + 1) + "-" + d2(d.getDate()); }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function sameDay(a, b) { return key(a) === key(b); }
+  function longDate(d) {
+    return DOW[d.getDay()] + ", " + MON[d.getMonth()] + " " + d.getDate() + ", " + d.getFullYear();
+  }
+  function clock(m) {
+    var h = Math.floor(m / 60), mm = m % 60;
+    var ap = h >= 12 ? "PM" : "AM";
+    var hh = h % 12; if (hh === 0) { hh = 12; }
+    return hh + ":" + d2(mm) + " " + ap;
+  }
+
+  /* =====================================================================
+     CUSTOMERS AND THE MONTH OF EVENTS. Fictional throughout.
+     ===================================================================== */
+  var CUST = {
+    dana: { name: "Dana Whitfield", place: "1420 Ridgeview Court, Waukesha",
+      phone: "(262) 555-0148", email: "dana.whitfield@example.com",
+      details: "Wants the front bed rebuilt and a new walkway through to the side door.",
+      estimates: [{ no: "1042", amount: "$4,335.00", when: "August 12, 2026" },
+                  { no: "1017", amount: "$1,890.00", when: "July 28, 2026" }] },
+    corwin: { name: "Corwin Ashby", place: "88 Larkspur Lane, Pewaukee",
+      phone: "(262) 555-0193", email: "c.ashby@example.com",
+      details: "Standing water along the north property line after heavy rain.",
+      estimates: [] },
+    priya: { name: "Priya Halloran", place: "512 Marchmont Drive, Delafield",
+      phone: "(262) 555-0117", email: "p.halloran@example.com",
+      details: "New plantings along the driveway.", estimates: [] },
+    odalys: { name: "Odalys Fenwick", place: "27 Kettle Ridge Road, Hartland",
+      phone: "(262) 555-0164", email: "o.fenwick@example.com",
+      details: "Retaining wall behind the garage.", estimates: [] },
+    marisol: { name: "Marisol Trent", place: "9 Bellwether Court, Oconomowoc",
+      phone: "(262) 555-0125", email: "m.trent@example.com",
+      details: "Full lawn renovation quote.", estimates: [] },
+    tobias: { name: "Tobias Renn", place: "744 Quarry Bend, Sussex",
+      phone: "(262) 555-0139", email: "t.renn@example.com",
+      details: "Snow contract for the coming season.", estimates: [] }
+  };
+
+  /* Stand-in for the address lookup the build will call, which will be a
+     real geocoder. It answers anything plausible so the INTERACTION can be
+     judged: type a house number and part of a street and it offers whole,
+     standardised addresses. */
+  var STREETS = [
+    "Brittany Lane", "Brittany Court", "Ridgeview Court", "Ridgeview Drive",
+    "Larkspur Lane", "Marchmont Drive", "Kettle Ridge Road", "Bellwether Court",
+    "Quarry Bend", "Coldspring Road", "Silverbrook Parkway", "Oakhurst Trail",
+    "Meadow Vale Road", "Sycamore Ridge", "Fieldstone Way", "Grandview Boulevard",
+    "Summit Avenue", "Prairie Crossing", "Hillcrest Drive", "Broadway"
+  ];
+  var TOWNS = [
+    ["Waukesha", "53188"], ["Pewaukee", "53072"], ["Delafield", "53018"],
+    ["Hartland", "53029"], ["Oconomowoc", "53066"], ["Brookfield", "53045"],
+    ["Sussex", "53089"]
+  ];
+  var ADDRESSES = [
+    "1420 Ridgeview Court, Waukesha, WI 53188",
+    "1425 Ridgeview Drive, Waukesha, WI 53188",
+    "88 Larkspur Lane, Pewaukee, WI 53072",
+    "512 Marchmont Drive, Delafield, WI 53018",
+    "27 Kettle Ridge Road, Hartland, WI 53029",
+    "9 Bellwether Court, Oconomowoc, WI 53066",
+    "744 Quarry Bend, Sussex, WI 53089",
+    "310 Coldspring Road, Waukesha, WI 53186",
+    "2201 Silverbrook Parkway, Brookfield, WI 53045"
+  ];
+
+  function ev(s, e, who, kind, title, cust) {
+    return { s: s, e: e, who: who, kind: kind, title: title, cust: cust || null };
+  }
+  function ad(who, kind, title) {
+    return { allday: true, who: who, kind: kind, title: title, cust: null };
+  }
+
+  var BASE = {
+    "2026-08-03": [ev(480, 540, "Jen", "Office", "Payroll review"),
+                   ev(840, 900, "Mike", "Call", "Supplier call")],
+    "2026-08-05": [ev(540, 630, "Paul", "Estimate", "Halvorsen fence line", "priya")],
+    "2026-08-07": [ev(420, 480, "Paul", "Office", "Crew huddle"),
+                   ev(600, 660, "Mike", "Delivery/pickup", "Mulch delivery"),
+                   ev(1020, 1080, "Jen", "Other", "Chamber board")],
+    "2026-08-10": [ev(480, 540, "Paul", "Site visit", "Harborview walk"),
+                   ev(780, 840, "Jen", "Appointment", "Bank")],
+    "2026-08-12": [ev(600, 690, "Paul", "Estimate", "Marchetti patio", "odalys")],
+    "2026-08-15": [ad("Jen", "Reserved", "Vacation day"),
+                   ev(450, 480, "Paul", "Office", "Crew huddle"),
+                   ev(540, 615, "Paul", "Estimate", "Dana Whitfield", "dana"),
+                   ev(540, 585, "Jen", "Appointment", "Insurance renewal review"),
+                   ev(600, 630, "Mike", "Call", "Supplier call about mulch pricing"),
+                   ev(720, 780, "Jen", "Personal", ""),
+                   ev(840, 900, "Paul", "Estimate", "Corwin Ashby", "corwin"),
+                   ev(900, 930, "Mike", "Delivery/pickup", "Skid steer attachment pickup"),
+                   ev(960, 1020, "Paul", "Estimate", "Beckworth - drainage by the garage", null),
+                   ev(1050, 1110, "Jen", "Site visit", "Walk the Harborview lot"),
+                   ev(1080, 1140, "Mike", "Other", "Chamber mixer")],
+    "2026-08-16": [ev(570, 630, "Paul", "Estimate", "Priya Halloran", "priya"),
+                   ev(780, 840, "Paul", "Estimate", "Odalys Fenwick", "odalys")],
+    "2026-08-17": [ev(480, 540, "Jen", "Office", "Payroll review"),
+                   ev(600, 660, "Paul", "Estimate", "Marisol Trent", "marisol")],
+    "2026-08-19": [ev(840, 900, "Mike", "Call", "Nursery order")],
+    "2026-08-20": [ad("Mike", "Reserved", "Equipment service"),
+                   ev(540, 600, "Paul", "Estimate", "Dana Whitfield", "dana")],
+    "2026-08-24": [ev(540, 600, "Paul", "Estimate", "Tobias Renn", "tobias")],
+    "2026-08-26": [ev(480, 540, "Jen", "Office", "Month end"),
+                   ev(900, 960, "Mike", "Delivery/pickup", "Salt order")],
+    "2026-08-28": [ev(1020, 1080, "Paul", "Personal", "")]
+  };
+
+  /* Each reviewer state carries a world consistent with itself: its day,
+     its month, its peek and its counts all agree. */
+  function events(d) {
+    var k = key(d);
+    var list = BASE[k] ? BASE[k].slice(0) : [];
+    var isToday = k === "2026-08-15";
+    var i, out = [];
+
+    if (SCEN === "down") { return []; }
+
+    if (SCEN === "nothingAhead") { return []; }
+
+    if (SCEN === "nothing") {
+      if (isToday) { return []; }
+      /* Estimates before the 20th are cleared so the next one really is the
+         20th; everything else stands. */
+      for (i = 0; i < list.length; i++) {
+        if (list[i].kind === "Estimate" && k > "2026-08-15" && k < "2026-08-20") { continue; }
+        out.push(list[i]);
+      }
+      return out;
+    }
+
+    if (SCEN === "noEst" || SCEN === "noEstAllDay") {
+      for (i = 0; i < list.length; i++) {
+        if (list[i].kind === "Estimate" && k >= "2026-08-15" && k < "2026-08-20") { continue; }
+        if (list[i].kind === "Estimate" && k === "2026-08-20" && SCEN === "noEstAllDay") {
+          out.push(ad("Paul", "Estimate", "Dana Whitfield"));
+          continue;
+        }
+        out.push(list[i]);
+      }
+      return out;
+    }
+    return list;
+  }
+
+  function estimatesOn(d) {
+    var all = events(d), out = [], i;
+    for (i = 0; i < all.length; i++) { if (all[i].kind === "Estimate") { out.push(all[i]); } }
+    return out;
+  }
+
+  /* An estimate event becomes a card. Its customer record supplies the
+     phone, the email, the location and the saved estimates; without one it
+     keeps its title and place exactly as typed. */
+  function visitsToday() {
+    var es = estimatesOn(TODAY), out = [], i;
+    for (i = 0; i < es.length; i++) {
+      var e = es[i];
+      var c = e.cust ? CUST[e.cust] : null;
+      out.push({
+        id: e.cust || ("un" + i), ev: e, matched: !!c,
+        name: c ? c.name : e.title,
+        place: c ? c.place : "310 Coldspring Road",
+        phone: c ? c.phone : "", email: c ? c.email : "",
+        details: c ? c.details : "",
+        estimates: c ? c.estimates : [],
+        span: e.allday ? "All day" : (clock(e.s) + " to " + clock(e.e)),
+        time: e.allday ? "" : clock(e.s),
+        ended: !e.allday && e.e <= NOW_MIN
+      });
+    }
+    return out;
+  }
+
+  function counts() {
+    var red = 0, orange = 0, i, d;
+    var es = estimatesOn(TODAY);
+    for (i = 0; i < es.length; i++) { if (es[i].allday || es[i].e > NOW_MIN) { red++; } }
+    for (i = 1; i <= 90; i++) {
+      d = addDays(TODAY, i);
+      orange += estimatesOn(d).length;
+    }
+    return { red: red, orange: orange };
+  }
+
+  /* The next estimate visit after today, for the empty-state sentence. */
+  function nextVisit() {
+    var i, d, es;
+    for (i = 1; i <= 90; i++) {
+      d = addDays(TODAY, i);
+      es = estimatesOn(d);
+      if (es.length) { return { day: d, ev: es[0] }; }
+    }
+    return null;
+  }
+
+  /* =====================================================================
+     DOM HELPERS
+     ===================================================================== */
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) { n.className = cls; }
+    if (text != null && text !== "") { n.textContent = text; }
+    return n;
+  }
+  function clear(n) { while (n.firstChild) { n.removeChild(n.firstChild); } }
+  function mdash() { return "\u2014"; }
+
+  /* Every button in this file is an icon plus a label. */
+  function iconBtn(cls, icon, label, id) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "btn" + (cls ? " " + cls : "");
+    b.innerHTML = icon;
+    b.appendChild(el("span", "", label));
+    if (id) { b.id = id; }
+    return b;
+  }
+  function iconLink(cls, icon, label, href, newTab) {
+    var a = document.createElement("a");
+    a.className = "btn" + (cls ? " " + cls : "");
+    a.href = href;
+    if (newTab) { a.target = "_blank"; a.rel = "noopener"; }
+    a.innerHTML = icon;
+    a.appendChild(el("span", "", label));
+    return a;
+  }
+  function pill(kind, isEst) {
+    var p = el("span", isEst ? "pill est" : "pill");
+    p.innerHTML = KIND_ICON[kind] || KIND_ICON.Other;
+    p.appendChild(el("span", "", kind));
+    return p;
+  }
+  function badge(who) { return el("span", "pbadge pb-" + who, who.charAt(0)); }
+
+  /* =====================================================================
+     COUNT BUBBLES
+     ===================================================================== */
+  function bubbles(down) {
+    var wrap = el("span", "srcnt");
+    if (down) {
+      var dots = el("span", "cbub dots", "...");
+      dots.title = C.dotsHover;
+      dots.setAttribute("aria-label", C.dotsHover);
+      wrap.appendChild(dots);
+      return wrap;
+    }
+    var c = counts();
+    if (c.red > 0) {
+      var r = el("span", "cbub red", String(c.red));
+      r.title = String(c.red) + " remaining today";
+      r.setAttribute("aria-label", r.title);
+      wrap.appendChild(r);
+    }
+    if (c.orange > 0) {
+      var o = el("span", "cbub orange", String(c.orange));
+      o.title = String(c.orange) + " booked after today";
+      o.setAttribute("aria-label", o.title);
+      wrap.appendChild(o);
+    }
+    return wrap;
+  }
+
+  /* =====================================================================
+     THE BOARD FRAME (stage mount only)
+     ===================================================================== */
+  function stageStrip(down) {
+    var strip = el("div", "stgstrip" + (stripOpen ? " is-open" : ""));
+    strip.id = "stgstrip";
+
+    var now = document.createElement("button");
+    now.type = "button";
+    now.className = "stgnow";
+    now.id = "stgnow";
+    now.appendChild(el("span", "sr", C.changeStage));
+    now.appendChild(el("span", "snlab", "Estimate Scheduled"));
+    now.appendChild(bubbles(down));
+    now.appendChild(el("span", "snarr", stripOpen ? "\u25b2" : "\u25bc"));
+    now.addEventListener("click", function () { stripOpen = !stripOpen; render(); });
+    strip.appendChild(now);
+
+    var list = el("div", "stglist"), i;
+    for (i = 0; i < STAGES.length; i++) {
+      (function (s) {
+        var row = document.createElement("button");
+        row.type = "button";
+        row.className = "stgrow" + (s.key === "scheduled" ? " is-here" : "");
+        var lab = el("span", "srlab");
+        lab.appendChild(el("span", "", s.label));
+        if (s.sub) { lab.appendChild(el("span", "srsub", s.sub)); }
+        row.appendChild(lab);
+        if (s.calendar) { row.title = C.stageHelp; row.appendChild(bubbles(down)); }
+        else {
+          var c = el("span", "srcnt");
+          c.appendChild(el("span", "plaincnt", String(s.count)));
+          row.appendChild(c);
+        }
+        list.appendChild(row);
+      }(STAGES[i]));
+    }
+    strip.appendChild(list);
+    return strip;
+  }
+
+  function boardFrame(host, down) {
+    host.appendChild(stageStrip(down));
+
+    /* The board's LIVE opening paragraph has never been read by any act.
+       This is the lead act's blessed replacement; the build must read the
+       live line before replacing it. */
+    host.appendChild(el("p", "boardlede", C.boardLede));
+
+    host.appendChild(howAccordion());
+  }
+
+  /* The Leads page's own details.howto shape: one summary, then h4-headed
+     sections. It replaces the bubble that restated the stage line. */
+  function howAccordion() {
+    var d = document.createElement("details");
+    d.className = "howto";
+    d.id = "howto";
+    if (helpOpen) { d.open = true; }
+    d.addEventListener("toggle", function () { helpOpen = !!d.open; });
+    var sum = document.createElement("summary");
+    sum.textContent = C.howTitle;
+    d.appendChild(sum);
+    var body = el("div", "howbody"), i;
+    for (i = 0; i < C.how.length; i++) {
+      body.appendChild(el("h4", "", C.how[i][0]));
+      body.appendChild(el("p", "", C.how[i][1]));
+    }
+    d.appendChild(body);
+    return d;
+  }
+
+  /* =====================================================================
+     SURFACE HEADER
+     ===================================================================== */
+  function surfaceHeader(host) {
+    var head = el("div", "dayhead");
+    head.appendChild(el("span", "daydate", longDate(TODAY)));
+    var rf = iconBtn("small", ICON.refresh, C.refresh, "refresh");
+    rf.addEventListener("click", function () { showOverlay(); });
+    head.appendChild(rf);
+    host.appendChild(head);
+
+    var sch = iconBtn("solid big", ICON.schedule, C.schedule, "schedule");
+    sch.addEventListener("click", function () { openBooking(); });
+    host.appendChild(sch);
+  }
+
+  /* =====================================================================
+     ESTIMATE VISIT CARDS
+
+     THE CARD CARRIES NO ROW-TAP HANDLER. Every action on it is an explicit
+     button. The correspondence panel will later mount on pipeline-stage
+     surfaces where a row tap already opens the estimate line items, and
+     this stage must not spend that gesture first.
+     ===================================================================== */
+  function visitCard(v) {
+    var c = el("div", "card" + (v.ended ? " past" : ""));
+    c.setAttribute("data-visit", v.id);
+
+    var top = el("div", "cardtop");
+    top.appendChild(el("span", "ctime" + (v.ended ? " done" : ""), v.span));
+    top.appendChild(pill("Estimate", true));
+    if (v.ended) {
+      var em = el("span", "emark");
+      em.innerHTML = ICON.check;
+      em.appendChild(el("span", "", C.endedMark));
+      top.appendChild(em);
+    }
+    if (!v.matched) {
+      var um = el("span", "umark");
+      um.innerHTML = KIND_ICON.Personal;
+      um.appendChild(el("span", "", C.unmatchedMark));
+      top.appendChild(um);
+    }
+    c.appendChild(top);
+
+    c.appendChild(el("p", "cname", v.name));
+
+    var meta = el("p", "cmeta");
+    meta.appendChild(document.createTextNode(v.place));
+    if (v.matched) {
+      meta.appendChild(document.createElement("br"));
+      var tel = document.createElement("a");
+      tel.href = "tel:" + v.phone.replace(/[^0-9]/g, "");
+      tel.textContent = v.phone;
+      meta.appendChild(tel);
+      meta.appendChild(document.createElement("br"));
+      var mail = document.createElement("a");
+      mail.href = "mailto:" + v.email;
+      mail.textContent = v.email;
+      meta.appendChild(mail);
+      c.appendChild(meta);
+      c.appendChild(el("p", "cdetail", v.details));
+    } else {
+      c.appendChild(meta);
+    }
+
+    var acts = el("div", "cacts");
+    if (v.matched) { acts.appendChild(estimateControl(v)); }
+    var mv = iconBtn("", ICON.move, C.move);
+    mv.setAttribute("data-move", v.id);
+    mv.addEventListener("click", function () { openMove(v); });
+    acts.appendChild(mv);
+    var cn = iconBtn("danger", ICON.x, C.cancel);
+    cn.setAttribute("data-cancel", v.id);
+    cn.addEventListener("click", function () { openCancel(v); });
+    acts.appendChild(cn);
+    c.appendChild(acts);
+    return c;
+  }
+
+  /* With saved estimates, or when QuickBooks cannot be reached, the control
+     opens the menu. With none saved and QuickBooks answering, it opens a new
+     estimate directly (R22), so it is a link, not a menu. */
+  function estimateControl(v) {
+    /* With estimates saved the control opens the container, and it is the
+       estimates INSIDE that open in a new tab. With none saved there is no
+       container worth opening, so the control writes one instead. When
+       QuickBooks cannot be reached we do not know which case this is, so
+       the container opens and says so. */
+    if (QB === "ok" && !v.estimates.length) {
+      var a = iconLink("solid", ICON.write, C.writeEstimate, "#estimate-new", true);
+      a.setAttribute("data-write", v.id);
+      return a;
+    }
+    var b = iconBtn("solid", ICON.estimates, C.estimates);
+    b.setAttribute("data-estimate", v.id);
+    b.addEventListener("click", function () { openEstimates(v); });
+    return b;
+  }
+
+  /* =====================================================================
+     EVENTS LIST - every event on all three calendars for today, the
+     estimate visits included, as compact lines rather than repeated cards.
+     Whose event it is leads the line, in its own colour.
+     ===================================================================== */
+  function eventRow(e) {
+    var row = el("div", "evrow");
+    row.appendChild(el("span", "evtime", e.allday ? "All day" : clock(e.s)));
+    row.appendChild(badge(e.who));
+    var body = el("div", "evbody");
+    var l1 = el("div", "evline1");
+    l1.appendChild(el("span", "evwho", e.who));
+    l1.appendChild(pill(e.kind, e.kind === "Estimate"));
+    body.appendChild(l1);
+    /* A Personal event shows its time and the word Personal only. */
+    if (e.kind !== "Personal" && e.title) { body.appendChild(el("div", "evtitle", e.title)); }
+    row.appendChild(body);
+    return row;
+  }
+  function eventsList(list) {
+    var box = el("div", "evlist"), i;
+    for (i = 0; i < list.length; i++) { box.appendChild(eventRow(list[i])); }
+    return box;
+  }
+
+  function sortDay(list) {
+    return list.slice(0).sort(function (a, b) {
+      if (a.allday && !b.allday) { return -1; }
+      if (b.allday && !a.allday) { return 1; }
+      return (a.s || 0) - (b.s || 0);
+    });
+  }
+
+  /* =====================================================================
+     THE CALENDAR - three views. Month and Week are real grids; List is the
+     agenda. The arrows move a month or a week and the range says which one
+     you are looking at, so an arrow never sits there doing nothing.
+     ===================================================================== */
+  function weekStartOf(d) { return addDays(d, -d.getDay()); }
+
+  function rangeLabel(a, b) {
+    if (a.getMonth() === b.getMonth()) {
+      return MON[a.getMonth()] + " " + a.getDate() + " " + mdash() + " " + b.getDate() + ", " + b.getFullYear();
+    }
+    return MON[a.getMonth()] + " " + a.getDate() + " " + mdash() + " "
+      + MON[b.getMonth()] + " " + b.getDate() + ", " + b.getFullYear();
+  }
+  function calRange() {
+    if (CALVIEW === "month") { return MON[anchor.getMonth()] + " " + anchor.getFullYear(); }
+    if (CALVIEW === "week") {
+      var ws = weekStartOf(anchor);
+      return rangeLabel(ws, addDays(ws, 6));
+    }
+    return rangeLabel(anchor, addDays(anchor, 6));
+  }
+  function step(dir) {
+    if (CALVIEW === "month") {
+      /* Keep the day of month, clamped, so stepping away and back returns
+         the Week and List views to the span they were showing. */
+      var y = anchor.getFullYear(), m = anchor.getMonth() + dir, day = anchor.getDate();
+      var last = new Date(y, m + 1, 0).getDate();
+      anchor = new Date(y, m, Math.min(day, last));
+      selDay = null;
+    } else {
+      anchor = addDays(anchor, dir * 7);
+    }
+    render();
+  }
+
+  function calBar() {
+    var bar = el("div", "calbar");
+    var segs = el("div", "segs");
+    var views = [["month", "Month"], ["week", "Week"], ["list", "List"]];
+    var i;
+    for (i = 0; i < views.length; i++) {
+      (function (v) {
+        var s = document.createElement("button");
+        s.type = "button";
+        s.className = "seg" + (CALVIEW === v[0] ? " on" : "");
+        s.setAttribute("data-view", v[0]);
+        s.textContent = v[1];
+        s.addEventListener("click", function () { CALVIEW = v[0]; render(); });
+        segs.appendChild(s);
+      }(views[i]));
+    }
+    bar.appendChild(segs);
+
+    var nav = el("div", "calnav");
+    var prev = document.createElement("button");
+    prev.type = "button";
+    prev.className = "icobtn";
+    prev.id = "calprev";
+    prev.innerHTML = "&#9664;";
+    prev.setAttribute("aria-label", "Back");
+    prev.addEventListener("click", function () { step(-1); });
+    var next = document.createElement("button");
+    next.type = "button";
+    next.className = "icobtn";
+    next.id = "calnext";
+    next.innerHTML = "&#9654;";
+    next.setAttribute("aria-label", "Forward");
+    next.addEventListener("click", function () { step(1); });
+    nav.appendChild(prev);
+    nav.appendChild(next);
+    bar.appendChild(nav);
+    return bar;
+  }
+
+  function dotsFor(d) {
+    var list = events(d), wrap = el("div", "mdots"), i, n = 0;
+    for (i = 0; i < list.length && n < 3; i++) {
+      wrap.appendChild(el("span", "mdot" + (list[i].kind === "Estimate" ? " est" : "")));
+      n++;
+    }
+    return wrap;
+  }
+
+  function monthView() {
+    var wrap = el("div", "cal");
+    var head = el("div", "mdow"), i;
+    for (i = 0; i < 7; i++) { head.appendChild(el("span", "", DOW1[i])); }
+    wrap.appendChild(head);
+
+    var first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    var start = addDays(first, -first.getDay());
+    var grid = el("div", "mgrid");
+    var inThisMonth = anchor.getMonth() === TODAY.getMonth()
+      && anchor.getFullYear() === TODAY.getFullYear();
+    var sel = selDay || (inThisMonth ? TODAY : first);
+
+    for (i = 0; i < 42; i++) {
+      (function (d) {
+        var cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "mcell"
+          + (d.getMonth() !== anchor.getMonth() ? " out" : "")
+          + (sameDay(d, TODAY) ? " today" : "")
+          + (sameDay(d, sel) ? " sel" : "");
+        cell.setAttribute("data-day", key(d));
+        cell.appendChild(el("span", "mnum", String(d.getDate())));
+        cell.appendChild(dotsFor(d));
+        cell.setAttribute("data-daypop", key(d));
+        cell.addEventListener("mouseenter", function () { showDayPop(cell, d); });
+        cell.addEventListener("mouseleave", closeWkPop);
+        cell.addEventListener("click", function () { closeWkPop(); selDay = d; render(); });
+        grid.appendChild(cell);
+      }(addDays(start, i)));
+    }
+    wrap.appendChild(grid);
+
+    var day = el("div", "mday");
+    day.appendChild(el("p", "mdayhead", longDate(sel)));
+    var list = sortDay(events(sel));
+    if (list.length) {
+      for (i = 0; i < list.length; i++) { day.appendChild(monthLine(list[i])); }
+    } else {
+      var none = el("div", "lrow");
+      none.appendChild(el("div", "lnone", "..."));
+      day.appendChild(none);
+    }
+    wrap.appendChild(day);
+    return wrap;
+  }
+
+  function monthLine(e) {
+    var row = el("div", "lrow");
+    var evs = el("div", "levs");
+    var chip = el("div", "lchip" + (e.kind === "Estimate" ? " est" : ""));
+    chip.appendChild(el("span", "ldot"));
+    chip.appendChild(el("span", "ltime", e.allday ? "All day" : clock(e.s)));
+    chip.appendChild(badge(e.who));
+    chip.appendChild(el("span", "", e.kind === "Personal" ? "Personal" : e.title));
+    evs.appendChild(chip);
+    row.appendChild(evs);
+    return row;
+  }
+
+  /* 7 AM to 7 PM covers every event on this calendar, so the grid needs no
+     inner scroller and its columns cannot drift from the header's. */
+  var WK_START = 7, WK_END = 19, WK_ROW = 44;
+
+  /* The hover card. A block is too small to read from, so pointing at one
+     fades in what it actually is. */
+  var wkPop = null, wkPopFor = null;
+  function ensureWkPop() {
+    if (wkPop) { return; }
+    wkPop = el("div", "wkpop");
+    wkPop.id = "wkpop";
+    document.body.appendChild(wkPop);
+  }
+  function closeWkPop() {
+    if (wkPop) { wkPop.className = "wkpop"; }
+    wkPopFor = null;
+  }
+  function placePop(node) {
+    var r = node.getBoundingClientRect();
+    var top = r.top - 8;
+    var left = r.left + r.width / 2 - 132;
+    if (left < 8) { left = 8; }
+    wkPop.style.left = left + "px";
+    wkPop.style.top = Math.max(8, top - 90) + "px";
+    wkPopFor = node;
+    wkPop.className = "wkpop is-open";
+  }
+
+  function showWkPop(node, e, name) {
+    ensureWkPop();
+    clear(wkPop);
+    wkPop.appendChild(el("span", "wkpt", name));
+    wkPop.appendChild(document.createTextNode(
+      e.allday ? "All day" : (clock(e.s) + " to " + clock(e.e))));
+    var m = el("div", "wkpm");
+    m.appendChild(badge(e.who));
+    m.appendChild(el("span", "", e.who));
+    m.appendChild(pill(e.kind, e.kind === "Estimate"));
+    wkPop.appendChild(m);
+    placePop(node);
+  }
+
+  /* The same card on a month day, listing what is on it. */
+  function showDayPop(node, d) {
+    ensureWkPop();
+    clear(wkPop);
+    wkPop.appendChild(el("span", "wkpt", longDate(d)));
+    var list = sortDay(events(d)), i;
+    if (!list.length) { return; }
+    for (i = 0; i < list.length; i++) {
+      var e = list[i];
+      var row = el("div", "wkpm");
+      row.appendChild(el("span", "wkpq", e.allday ? "All day" : clock(e.s)));
+      row.appendChild(badge(e.who));
+      row.appendChild(el("span", "", e.kind === "Personal" ? "Personal" : e.title));
+      wkPop.appendChild(row);
+    }
+    placePop(node);
+  }
+  function wireWkPop(node, e, name) {
+    node.addEventListener("mouseenter", function () { showWkPop(node, e, name); });
+    node.addEventListener("mouseleave", closeWkPop);
+    node.addEventListener("click", function (ev2) {
+      ev2.stopPropagation();
+      if (wkPopFor === node) { closeWkPop(); return; }
+      showWkPop(node, e, name);
+    });
+  }
+
+  function weekView() {
+    var ws = weekStartOf(anchor);
+    var wrap = el("div", "cal");
+    var scroll = el("div", "wkscroll");
+    var i, j, d;
+
+    var head = el("div", "wkhead");
+    head.appendChild(el("span", "wkgutter", ""));
+    for (i = 0; i < 7; i++) {
+      d = addDays(ws, i);
+      var h = el("span", sameDay(d, TODAY) ? "isnow" : "");
+      h.appendChild(document.createTextNode(DOW1[d.getDay()]));
+      h.appendChild(el("span", "wknum", String(d.getDate())));
+      head.appendChild(h);
+    }
+    scroll.appendChild(head);
+
+    var adRow = el("div", "wkallday");
+    adRow.appendChild(el("span", "wkgutter", ""));
+    for (i = 0; i < 7; i++) {
+      d = addDays(ws, i);
+      var cell = el("div", "adcell");
+      var list = events(d);
+      for (j = 0; j < list.length; j++) {
+        if (list[j].allday) {
+          cell.appendChild(el("div", "adchip", list[j].kind === "Personal" ? "Personal" : list[j].title));
+        }
+      }
+      adRow.appendChild(cell);
+    }
+    scroll.appendChild(adRow);
+
+    var body = el("div", "wkbody");
+    var gutter = el("div", "wkhours wkgutter");
+    for (i = WK_START; i < WK_END; i++) {
+      gutter.appendChild(el("div", "wkhour", clock(i * 60).replace(":00", "")));
+    }
+    body.appendChild(gutter);
+
+    for (i = 0; i < 7; i++) {
+      d = addDays(ws, i);
+      var col = el("div", "wkcol" + (sameDay(d, TODAY) ? " isnow" : ""));
+      for (j = WK_START; j < WK_END; j++) { col.appendChild(el("div", "wkline")); }
+      var timed = [], all = events(d);
+      for (j = 0; j < all.length; j++) { if (!all[j].allday) { timed.push(all[j]); } }
+      timed.sort(function (a, b) { return a.s - b.s; });
+
+      /* Width is shared within an OVERLAP CLUSTER, never across the whole
+         day. Splitting per day was why a 7:30 event that clashed with
+         nothing still rendered at half width, which is most of why the
+         week view could not be read. */
+      var clusters = [], cur = null, k, ci;
+      for (j = 0; j < timed.length; j++) {
+        if (cur && timed[j].s < cur.end) {
+          cur.items.push(timed[j]);
+          if (timed[j].e > cur.end) { cur.end = timed[j].e; }
+        } else {
+          cur = { items: [timed[j]], end: timed[j].e };
+          clusters.push(cur);
+        }
+      }
+      for (ci = 0; ci < clusters.length; ci++) {
+        var items = clusters[ci].items, ends = [];
+        for (j = 0; j < items.length; j++) {
+          k = 0;
+          while (ends[k] != null && ends[k] > items[j].s) { k++; }
+          ends[k] = items[j].e;
+          items[j]._c = k;
+        }
+        clusters[ci].n = Math.max(1, ends.length);
+      }
+
+      for (ci = 0; ci < clusters.length; ci++) {
+        var ncol = clusters[ci].n, its = clusters[ci].items;
+        for (j = 0; j < its.length; j++) {
+          var e = its[j];
+          var name = (e.kind === "Personal" ? "Personal" : e.title);
+          /* The grid can only ever show a little, so a block leads with the
+             time and whose it is; the hover card carries the rest. */
+          var blk = el("div", "wkev p-" + e.who + (e.kind === "Estimate" ? " est" : ""));
+          var txt = el("div", "wktext");
+          /* No meridiem: the hour column beside it already says AM or PM,
+             and every character here is width the title needs. */
+          txt.appendChild(el("span", "wkt",
+            clock(e.s).replace(" AM", "").replace(" PM", "") + " " + e.who.charAt(0)));
+          txt.appendChild(document.createTextNode(name));
+          blk.appendChild(txt);
+          wireWkPop(blk, e, name);
+          blk.style.top = ((e.s - WK_START * 60) / 60 * WK_ROW) + "px";
+          var hpx = Math.max(18, (e.e - e.s) / 60 * WK_ROW - 2);
+          blk.style.height = hpx + "px";
+          /* The block keeps its true height so it still reads as a duration;
+             the TEXT is capped at whole lines inside it. */
+          var lines = Math.max(1, Math.floor((hpx - 4) / 11));
+          txt.style.maxHeight = (lines * 11) + "px";
+          txt.style.webkitLineClamp = String(lines);
+          /* Inset a little so a block never touches the next day's rule. */
+          blk.style.left = (e._c * (100 / ncol) + 0.8) + "%";
+          blk.style.width = ((100 / ncol) - 2) + "%";
+          col.appendChild(blk);
+        }
+      }
+      body.appendChild(col);
+    }
+    scroll.appendChild(body);
+    wrap.appendChild(scroll);
+    return wrap;
+  }
+
+  function listView() {
+    var wrap = el("div", "cal"), i, j;
+    for (i = 0; i < 7; i++) {
+      var d = addDays(anchor, i);
+      var row = el("div", "lrow" + (sameDay(d, TODAY) ? " today" : ""));
+      var dt = el("div", "ldate");
+      dt.appendChild(el("span", "ldow", DOW3[d.getDay()]));
+      dt.appendChild(el("span", "lnum", String(d.getDate())));
+      row.appendChild(dt);
+      var evs = el("div", "levs");
+      var list = sortDay(events(d));
+      if (!list.length) {
+        /* An empty day is drawn, not left as a gap. No sentence: the
+           calendar itself gets no empty state. */
+        evs.appendChild(el("div", "lnone", "..."));
+      }
+      for (j = 0; j < list.length; j++) {
+        var e = list[j];
+        var chip = el("div", "lchip" + (e.kind === "Estimate" ? " est" : ""));
+        chip.appendChild(el("span", "ldot"));
+        chip.appendChild(el("span", "ltime", e.allday ? "All day" : clock(e.s)));
+        chip.appendChild(badge(e.who));
+        chip.appendChild(el("span", "", e.kind === "Personal" ? "Personal" : e.title));
+        evs.appendChild(chip);
+      }
+      row.appendChild(evs);
+      wrap.appendChild(row);
+    }
+    return wrap;
+  }
+
+  function calendar(host) {
+    host.appendChild(el("h2", "sechead", H_CAL));
+    host.appendChild(calBar());
+    host.appendChild(el("p", "calrange", calRange()));
+    if (CALVIEW === "month") { host.appendChild(monthView()); }
+    else if (CALVIEW === "week") { host.appendChild(weekView()); }
+    else { host.appendChild(listView()); }
+  }
+
+  /* =====================================================================
+     CONTENT - identical on both mounts.
+     ===================================================================== */
+  function content(outer) {
+    var down = SCEN === "down";
+    /* One column on a phone; on a wide screen the day sits at a readable
+       measure on the left and the calendar takes the room it wants. */
+    var cols = el("div", "cols");
+    var host = el("div", "colmain");
+    var wide = el("div", "colwide");
+    var side = el("div", "colside");
+    /* Phone order is the blessed one: visits, the tomorrow peek, today's
+       events, the calendar. On a wide screen the grid places them. */
+    cols.appendChild(host);
+    cols.appendChild(wide);
+    cols.appendChild(side);
+    outer.appendChild(cols);
+
+    surfaceHeader(host);
+
+    if (down) {
+      var box = el("div", "down");
+      box.id = "downbox";
+      box.appendChild(el("p", "", C.downMsg));
+      var ta = iconBtn("solid", ICON.refresh, C.tryAgain, "tryagain");
+      ta.addEventListener("click", function () { showOverlay(); });
+      box.appendChild(ta);
+      host.appendChild(box);
+      host.appendChild(peekButton());
+      return;
+    }
+
+    host.appendChild(el("h2", "sechead", H_VISITS));
+    var vs = visitsToday(), i;
+    if (vs.length) {
+      for (i = 0; i < vs.length; i++) { host.appendChild(visitCard(vs[i])); }
+    } else {
+      var lines = emptyLines();
+      for (i = 0; i < lines.length; i++) { host.appendChild(el("p", "empty", lines[i])); }
+    }
+
+    /* The tomorrow peek sits BELOW today's list and opens as its own popup,
+       so it cannot be mistaken for today. */
+    host.appendChild(peekButton());
+
+    var day = sortDay(events(TODAY));
+    if (day.length) {
+      wide.appendChild(el("h2", "sechead", H_EVENTS));
+      wide.appendChild(eventsList(day));
+    }
+
+    calendar(side);
+  }
+
+  function emptyLines() {
+    var day = events(TODAY);
+    if (day.length) {
+      /* Estimates empty but the day holds other events. */
+      var nx = nextVisit();
+      if (!nx) { return [C.noEstimates]; }
+      return [C.noEstimates, nx.ev.allday ? C.nextAllDay : C.nextTimed];
+    }
+    /* Nothing at all - one statement replacing both sections' empty states. */
+    if (!nextVisit()) { return [C.nothingToday, C.nothingAhead]; }
+    return [C.nothingToday];
+  }
+
+  function peekButton() {
+    var b = iconBtn("big", ICON.schedule, C.peekLink, "peeklink");
+    b.style.marginTop = "12px";
+    b.addEventListener("click", function () { openPeek(); });
+    return b;
+  }
+
+  /* =====================================================================
+     SHEETS. The close control is sticky, so it stays reachable while a
+     sheet scrolls.
+     ===================================================================== */
+  var HOST = null;
+
+  /* A sheet rises on a phone and fades on a desktop, and leaves the same way
+     it arrived, so it is removed after its exit rather than at the click. */
+  function closeSheet() {
+    var scrim = document.getElementById("scrim");
+    if (!scrim) { return; }
+    scrim.id = "";
+    scrim.className = "scrim is-closing";
+    setTimeout(function () {
+      if (scrim.parentNode) { scrim.parentNode.removeChild(scrim); }
+    }, 220);
+  }
+
+  function showOverlay() {
+    var o = el("div", "overlay");
+    o.id = "overlay";
+    o.appendChild(el("div", "spinner"));
+    document.body.appendChild(o);
+    setTimeout(function () {
+      if (o.parentNode) { o.parentNode.removeChild(o); }
+    }, 900);
+  }
+
+  function openSheet(id, title, sub) {
+    clear(HOST);
+    var scrim = el("div", "scrim");
+    scrim.id = "scrim";
+    scrim.addEventListener("click", function (e) { if (e.target === scrim) { closeSheet(); } });
+    var sheet = el("div", "sheet");
+    sheet.id = id;
+    var head = el("div", "sheet-head");
+    head.appendChild(el("h2", "sheet-title", title));
+    var x = document.createElement("button");
+    x.type = "button";
+    x.className = "xbtn";
+    x.innerHTML = ICON.x;
+    x.setAttribute("aria-label", "Close");
+    x.addEventListener("click", closeSheet);
+    head.appendChild(x);
+    sheet.appendChild(head);
+    if (sub) { sheet.appendChild(el("p", "sheet-sub", sub)); }
+    scrim.appendChild(sheet);
+    HOST.appendChild(scrim);
+    if (window.requestAnimationFrame) {
+      window.requestAnimationFrame(function () { scrim.className = "scrim is-open"; });
+    } else {
+      setTimeout(function () { scrim.className = "scrim is-open"; }, 0);
+    }
+    return sheet;
+  }
+
+  function labeled(host, label, control, id) {
+    var box = document.createElement("div");
+    if (id) { box.id = id; }
+    box.appendChild(el("div", "flabel", label));
+    box.appendChild(control);
+    host.appendChild(box);
+    return box;
+  }
+  function input(id, type, value) {
+    var n = document.createElement("input");
+    n.className = "ctl";
+    n.id = id; n.type = type;
+    if (value != null) { n.value = value; }
+    return n;
+  }
+  function selectCtl(id, opts) {
+    var s = document.createElement("select");
+    s.className = "ctl"; s.id = id;
+    var i;
+    for (i = 0; i < opts.length; i++) {
+      var o = document.createElement("option");
+      o.value = opts[i]; o.textContent = opts[i];
+      s.appendChild(o);
+    }
+    return s;
+  }
+  /* A dropdown cannot carry an icon per option, so Category and Calendar
+     are icon grids. */
+  /* Stands in for the address lookup the build will call: type three
+     characters and matching addresses are offered; choosing one fills the
+     whole address. */
+  function addressMatches(q) {
+    var hits = [], i, j;
+    q = q.trim().toLowerCase();
+    if (q.length < 3) { return hits; }
+
+    /* Already-known addresses first. */
+    for (i = 0; i < ADDRESSES.length && hits.length < 6; i++) {
+      if (ADDRESSES[i].toLowerCase().indexOf(q) >= 0) { hits.push(ADDRESSES[i]); }
+    }
+
+    /* Then completions: a house number plus part of a street name becomes
+       whole, standardised addresses. This is what the geocoder will do. */
+    var m = /^(\d+)\s+(.*)$/.exec(q);
+    if (m && m[2].length >= 2) {
+      var num = m[1], frag = m[2];
+      for (i = 0; i < STREETS.length && hits.length < 6; i++) {
+        if (STREETS[i].toLowerCase().indexOf(frag) !== 0
+            && STREETS[i].toLowerCase().indexOf(" " + frag) < 0) { continue; }
+        for (j = 0; j < TOWNS.length && hits.length < 6; j++) {
+          var full = num + " " + STREETS[i] + ", " + TOWNS[j][0] + ", WI " + TOWNS[j][1];
+          if (hits.indexOf(full) < 0) { hits.push(full); }
+          if (j >= 1) { break; }
+        }
+      }
+    }
+    return hits;
+  }
+
+  function wireAddressSearch(inp, wrap, mark) {
+    var list = null;
+    function close() {
+      if (list && list.parentNode) { list.parentNode.removeChild(list); }
+      list = null;
+    }
+    function setMark(state) {
+      clear(mark);
+      if (!inp.value.trim()) { mark.className = "acnote"; return; }
+      mark.className = "acnote " + (state === "good" ? "good" : "warn");
+      mark.innerHTML = state === "good" ? ICON.check : ICON.write;
+      mark.appendChild(el("span", "", state === "good" ? C.addrOk : C.addrUnchecked));
+    }
+    inp.addEventListener("input", function () {
+      close();
+      setMark("warn");
+      var hits = addressMatches(inp.value), i;
+      if (!hits.length) { return; }
+      list = el("div", "aclist");
+      list.id = "acList";
+      for (i = 0; i < hits.length; i++) {
+        (function (addr) {
+          var r = document.createElement("button");
+          r.type = "button";
+          r.className = "acrow";
+          r.textContent = addr;
+          r.addEventListener("click", function () {
+            inp.value = addr;
+            close();
+            setMark("good");
+          });
+          list.appendChild(r);
+        }(hits[i]));
+      }
+      wrap.appendChild(list);
+    });
+    inp.addEventListener("blur", function () { setTimeout(close, 160); });
+    inp._setMark = setMark;
+  }
+
+  function optGrid(id, items, initial, onPick) {
+    var g = el("div", "optgrid");
+    g.id = id;
+    var chosen = initial, i;
+    function paint() {
+      var kids = g.childNodes, j;
+      for (j = 0; j < kids.length; j++) {
+        kids[j].className = "opt" + (kids[j].getAttribute("data-val") === chosen ? " on" : "");
+      }
+    }
+    for (i = 0; i < items.length; i++) {
+      (function (it) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.setAttribute("data-val", it.value);
+        b.innerHTML = it.icon;
+        b.appendChild(el("span", "", it.label));
+        b.addEventListener("click", function () {
+          chosen = it.value;
+          paint();
+          if (onPick) { onPick(chosen); }
+        });
+        g.appendChild(b);
+      }(items[i]));
+    }
+    paint();
+    g.chosen = function () { return chosen; };
+    return g;
+  }
+  function kindItems() {
+    var out = [], i;
+    for (i = 0; i < KINDS.length; i++) {
+      out.push({ value: KINDS[i], label: KINDS[i], icon: KIND_ICON[KINDS[i]] });
+    }
+    return out;
+  }
+  function personItems() {
+    var out = [], i;
+    for (i = 0; i < PEOPLE.length; i++) {
+      out.push({ value: PEOPLE[i], label: PEOPLE[i],
+        icon: '<span class="pbadge pb-' + PEOPLE[i] + '">' + PEOPLE[i].charAt(0) + "</span>" });
+    }
+    return out;
+  }
+
+  /* ---- Tomorrow's estimates - its own popup, not a fold ---------------- */
+  function openPeek() {
+    var tm = addDays(TODAY, 1);
+    var sheet = openSheet("peeksheet", C.peekLink, "");
+    sheet.appendChild(el("p", "sheetdate", longDate(tm)));
+    var body = el("div", "sheetpad");
+
+    if (SCEN === "down") {
+      body.appendChild(el("p", "", C.downMsg));
+      sheet.appendChild(body);
+      return;
+    }
+    var list = estimatesOn(tm), i;
+    if (!list.length) {
+      body.appendChild(el("p", "empty", C.peekEmpty));
+      sheet.appendChild(body);
+      return;
+    }
+    for (i = 0; i < list.length; i++) {
+      var e = list[i];
+      var c = e.cust ? CUST[e.cust] : null;
+      var row = el("div", "peekrow");
+      row.appendChild(el("span", "peektime", e.allday ? "All day" : clock(e.s)));
+      var nm = el("span", "peekname");
+      nm.appendChild(document.createTextNode(c ? c.name : e.title));
+      nm.appendChild(el("span", "peekplace", c ? c.place : ""));
+      row.appendChild(nm);
+      body.appendChild(row);
+    }
+    body.appendChild(el("p", "peeknote", C.peekNote));
+    sheet.appendChild(body);
+  }
+
+  /* ---- Book a visit ---------------------------------------------------- */
+  function openBooking() {
+    var sheet = openSheet("booksheet", C.bookTitle, "");
+
+    var titleBox = labeled(sheet, "Title", input("bkTitle", "text", ""), "bkTitleBox");
+
+    var cust = selectCtl("bkCustomer", [mdash(), "Dana Whitfield", "Corwin Ashby",
+                                        "Priya Halloran", "Odalys Fenwick"]);
+    labeled(sheet, "Customer", cust);
+
+    var pNote = el("p", "repnote", C.personalNote);
+    pNote.id = "bkPersonal";
+
+    var cat = optGrid("bkCategory", kindItems(), "Estimate", function () { sync(); });
+    labeled(sheet, "Category", cat);
+    sheet.appendChild(pNote);
+
+    labeled(sheet, "Calendar", optGrid("bkCalendar", personItems(), "Paul"));
+    labeled(sheet, "Date", input("bkDate", "date", "2026-08-20"));
+    var bkTimes = el("div", "two");
+    labeled(bkTimes, "Start time", input("bkStart", "time", "09:00"));
+    labeled(bkTimes, "End time", input("bkEnd", "time", "10:00"));
+    sheet.appendChild(bkTimes);
+    var locWrap = el("div", "acwrap");
+    var locIn = input("bkLocation", "text", "");
+    locIn.setAttribute("autocomplete", "off");
+    locWrap.appendChild(locIn);
+    var locMark = el("span", "acnote");
+    locMark.id = "bkAddrMark";
+    var locBox = labeled(sheet, "Location", locWrap);
+    locBox.appendChild(locMark);
+    wireAddressSearch(locIn, locWrap, locMark);
+
+    var det = document.createElement("textarea");
+    det.className = "ctl"; det.id = "bkDetails";
+    labeled(sheet, "Details", det);
+
+    var errBox = el("p", "sheeterr", C.bookFail);
+    errBox.id = "bkError";
+    sheet.appendChild(errBox);
+
+    var act = iconBtn("solid big sheetact", ICON.schedule, C.bookAct, "bkSubmit");
+    sheet.appendChild(act);
+
+    var PLACES = { "Dana Whitfield": CUST.dana.place, "Corwin Ashby": CUST.corwin.place,
+                   "Priya Halloran": CUST.priya.place, "Odalys Fenwick": CUST.odalys.place };
+    function sync() {
+      var has = cust.value !== mdash();
+      /* Title is shown only when no customer is chosen; with one it is
+         composed automatically, which keeps the naming habit true from our
+         side. */
+      titleBox.style.display = has ? "none" : "block";
+      pNote.style.display = (cat.chosen() === "Personal") ? "block" : "none";
+      var loc = document.getElementById("bkLocation");
+      loc.value = has ? (PLACES[cust.value] || "") : "";
+      if (loc._setMark) { loc._setMark("good"); }
+    }
+    cust.addEventListener("change", sync);
+    errBox.style.display = "none";
+    sync();
+
+    act.addEventListener("click", function () {
+      /* No soft fail: a write that fails is reported as failed, never as a
+         success. */
+      if (BOOKW === "fail") { errBox.style.display = "block"; return; }
+      closeSheet();
+    });
+  }
+
+  /* ---- Move this visit -------------------------------------------------- */
+  function openMove(v) {
+    var sheet = openSheet("movesheet", C.moveTitle, "");
+    labeled(sheet, "Date", input("mvDate", "date", "2026-08-15"));
+    var mvTimes = el("div", "two");
+    labeled(mvTimes, "Start time", input("mvStart", "time", "09:00"));
+    labeled(mvTimes, "End time", input("mvEnd", "time", "10:15"));
+    sheet.appendChild(mvTimes);
+
+    /* The Hub touches the single occurrence only; changing a series points
+       the person to Google Calendar. */
+    if (REPEAT === "repeat") {
+      sheet.appendChild(el("p", "repnote", C.repeatsA + longDate(TODAY) + C.repeatsB));
+    }
+    sheet.appendChild(el("div", "flabel", C.moveWhy));
+    var mwhy = selectCtl("mvReason", C.moveReasons);
+    sheet.appendChild(mwhy);
+    var mOther = labeled(sheet, C.cancelOther, input("mvOther", "text", ""), "mvOtherBox");
+    mOther.style.display = "none";
+    mwhy.addEventListener("change", function () {
+      mOther.style.display = (mwhy.value === "Other") ? "block" : "none";
+    });
+
+    var act = iconBtn("solid big sheetact", ICON.check, C.moveAct, "mvSubmit");
+    act.addEventListener("click", closeSheet);
+    sheet.appendChild(act);
+  }
+
+  /* ---- Cancel this visit? ----------------------------------------------- */
+  function openCancel(v) {
+    var sheet = openSheet("cancelsheet", C.cancelTitle,
+      v.name + ", " + (v.time || "all day") + " on " + longDate(TODAY) + ".");
+    var body = el("div", "sheetpad");
+    body.appendChild(el("p", "", C.cancelBodyA + v.name + C.cancelBodyB));
+    sheet.appendChild(body);
+
+    sheet.appendChild(el("div", "flabel", C.cancelWhy));
+    var why = selectCtl("cnReason", C.cancelReasons);
+    sheet.appendChild(why);
+
+    var otherBox = labeled(sheet, C.cancelOther, input("cnOther", "text", ""), "cnOtherBox");
+    otherBox.style.display = "none";
+    why.addEventListener("change", function () {
+      otherBox.style.display = (why.value === "Other") ? "block" : "none";
+    });
+
+    var acts = el("div", "actrow");
+    var keep = iconBtn("big", ICON.check, C.cancelKeep, "cnKeep");
+    keep.addEventListener("click", closeSheet);
+    acts.appendChild(keep);
+    var go = iconBtn("danger big", ICON.x, C.cancelDo, "cnSubmit");
+    go.addEventListener("click", closeSheet);
+    acts.appendChild(go);
+    sheet.appendChild(acts);
+  }
+
+  /* ---- The Estimate menu ------------------------------------------------ */
+  function openEstimates(v) {
+    var sheet = openSheet("estsheet", C.estMenuA + v.name, "");
+
+    if (QB === "down") {
+      /* An empty menu would read as "this customer has no estimates" and
+         send Paul off to write a second one. New estimate stays available
+         beneath the line. */
+      sheet.appendChild(el("p", "qbdown", C.estDown));
+    } else {
+      var wrap = el("div", "sheetpad"), i;
+      for (i = 0; i < v.estimates.length; i++) {
+        var e = v.estimates[i];
+        var row = document.createElement("a");
+        row.className = "estrow";
+        row.href = "#estimate-" + e.no;
+        row.target = "_blank";
+        row.rel = "noopener";
+        row.innerHTML = ICON.estimates;
+        var lab = document.createElement("span");
+        lab.appendChild(el("span", "estno", "Estimate " + e.no + " " + mdash() + " " + e.amount));
+        lab.appendChild(el("span", "estwhen", e.when));
+        row.appendChild(lab);
+        wrap.appendChild(row);
+      }
+      sheet.appendChild(wrap);
+    }
+
+    sheet.appendChild(el("div", "estdiv"));
+    var nw = iconLink("solid big sheetact", ICON.plus, C.estNew, "#estimate-new", true);
+    nw.id = "estNew";
+    sheet.appendChild(nw);
+  }
+
+  /* =====================================================================
+     RENDER + BOOT
+     ===================================================================== */
+  function render() {
+    var shell = document.getElementById("shell");
+    clear(shell);
+    var pad;
+    if (MOUNT === "page") {
+      var bar = el("div", "appbar");
+      bar.appendChild(el("span", "brand", "A-Plus Lawn Care"));
+      bar.appendChild(el("span", "navnow", C.pageName));
+      shell.appendChild(bar);
+      pad = el("div", "pad");
+      pad.appendChild(el("h1", "pgh", C.pageName));
+      content(pad);
+      shell.appendChild(pad);
+      return;
+    }
+    pad = el("div", "pad");
+    boardFrame(pad, SCEN === "down");
+    content(pad);
+    shell.appendChild(pad);
+  }
+
+  function boot() {
+    HOST = document.getElementById("sheetHost");
+    anchor = TODAY;
+    selDay = TODAY;
+
+    var mStage = document.getElementById("mStage");
+    var mPage = document.getElementById("mPage");
+    mStage.addEventListener("click", function () {
+      MOUNT = "stage"; mStage.className = "revbtn on"; mPage.className = "revbtn";
+      closeSheet(); render();
+    });
+    mPage.addEventListener("click", function () {
+      MOUNT = "page"; mPage.className = "revbtn on"; mStage.className = "revbtn";
+      closeSheet(); render();
+    });
+    document.getElementById("revScenario").addEventListener("change", function (e) {
+      SCEN = e.target.value; closeSheet(); render();
+    });
+    document.getElementById("revQb").addEventListener("change", function (e) {
+      QB = e.target.value; closeSheet(); render();
+    });
+    document.getElementById("revBook").addEventListener("change", function (e) {
+      BOOKW = e.target.value; closeSheet();
+    });
+    document.getElementById("revRepeat").addEventListener("change", function (e) {
+      REPEAT = e.target.value; closeSheet();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" || e.keyCode === 27) {
+        closeWkPop();
+        closeSheet();
+      }
+    });
+    document.addEventListener("click", function () { closeWkPop(); });
+
+    render();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else { boot(); }
+}());
+</script>
+</body>
+</html>
